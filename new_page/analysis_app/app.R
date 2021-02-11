@@ -46,15 +46,11 @@ ui <- fluidPage(
     
     h1(strong("Mapping COVID-19 in the United States", 
               style = "color: white"), align = "center"),
-    h2(paste("Updated ", end_date, sep = ""),
+    h2(paste("Last Updated ", end_date, sep = ""),
               style = "color: white", align = "center"),
     br(),
     
-    
     # Create the navigation bar, while making the title blank
-    
-    
-    
     
     navbarPage("", 
                
@@ -77,7 +73,7 @@ ui <- fluidPage(
                                         selectInput(inputId = "select_time",
                                                     label = "",
                                                     choices = c("Current Daily Level (7-Day Avg)",
-                                                                "Change Compared to 7 Days Ago",
+                                                                "% Change Compared to 7 Days Ago",
                                                                 "Cumulative All-Time Total"),
                                                     multiple = FALSE,
                                                     selected = "Current ")

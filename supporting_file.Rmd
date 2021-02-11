@@ -50,7 +50,27 @@ theme1 <- theme(plot.title = element_text(size = 13),
 # Case and death data
 
 state_text <- getURL("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv")
-state <- read_csv(state_text)
+state <- read_csv(state_text) %>% 
+  group_by(state) %>% 
+  mutate(new_cases = cases - lag(cases, k = 1)) %>% 
+  mutate(new_cases = case_when(new_cases < 0 ~ 0,
+                               new_cases >= 0 ~ new_cases)) %>% 
+  mutate(cases_7day_avg =  rollapply(new_cases, 7, mean, fill = NA, align = 'right')) %>% 
+  mutate(delta_cases_WoW = 100 * (0 - (1 - (cases_7day_avg / lag(cases_7day_avg, 7, default = 0, order_by = date))))) %>% 
+  
+  mutate(new_deaths = deaths - lag(deaths, k = 1)) %>% 
+  mutate(new_deaths = case_when(new_deaths < 0 ~ 0,
+                               new_deaths >= 0 ~ new_deaths)) %>% 
+  mutate(deaths_7day_avg =  rollapply(new_deaths, 7, mean, fill = NA, align = 'right')) %>% 
+  mutate(delta_deaths_WoW = 100 * (0 - (1 - (deaths_7day_avg / lag(deaths_7day_avg, 7, default = 0, order_by = date))))) %>% 
+  slice_max(order_by = date, n = 1) %>% 
+  select(state, 
+         cases_7day_avg,
+         delta_cases_WoW,
+         "cumulative_cases" = cases,
+         deaths_7day_avg,
+         delta_deaths_WoW,
+         "cumulative_deaths" = deaths)
 
 # State geography and population
 
@@ -94,10 +114,26 @@ vaccines <- read_csv(vaccines_text) %>%
                         "Veterans Health",
                         "Virgin Islands",
                         "United States"))) %>% 
+  group_by(state) %>% 
+  mutate(delta_vaccines_WoW = 100 * (0 - (1 - (seven_day_avg_doses_adm / 
+                                                 lag(seven_day_avg_doses_adm, 7, default = 0, order_by = date))))) %>% 
   slice_max(order_by = date, n = 1) %>% 
   mutate(state = case_when(state == "New York State" ~ "New York",
                            state != "New York State" ~ state))
 
+```
+
+```{r}
+
+vaccines %>% 
+  left
+
+```
+
+
+
+
+```{r}
 vaccines %>% 
   summarize(totalpop = sum(pop),
             totaldoses = sum(total_doses_administered))

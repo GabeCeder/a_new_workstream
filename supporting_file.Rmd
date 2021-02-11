@@ -7,18 +7,98 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+# Loading the important packages.
+
+library(tidyverse)
+library(readr)
+library(janitor)
+library(ggthemes)
+library(viridis)  
+library(tidycensus)
+library(transformr)
+library(lubridate)
+library(RColorBrewer)
+library(scales)
+library(tmaptools)
+library(patchwork)
+library(RCurl)
+library(readxl)
+library(zoo)
+
+# Turn off scientific notation
+
+options(scipen = 999)
+
+# Cache shapefiles for use in future sessions
+
+options(tigris_use_cache = TRUE)
+
 ```
 
 ```{r}
-bs_theme(
-  bg = "#101010", fg = "#FDF7F7", primary = "#ED79F9", 
-  base_font = font_google("Prompt"),
-  code_font = font_google("JetBrains Mono")
-) %>%
-  bs_theme_preview()
+end_date <- "2021-02-09"
+theme1 <- theme(plot.title = element_text(size = 13),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 10),
+        legend.position = "right",
+        legend.key.width = unit(0.5, "cm"))
 ```
 
+
 ```{r}
-library(shiny)
-sessionInfo()
+# Case and death data
+
+state_text <- getURL("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv")
+state <- read_csv(state_text)
+
+# State geography and population
+
+state_pop <- get_acs(geography = "state",
+                  variables = c(pop = "B01003_001"), 
+                  year = 2018,
+                  geometry = TRUE,
+                  shift_geo = TRUE) %>% 
+  clean_names() %>% 
+   select(geoid, 
+          state_name = name, 
+          "pop" = estimate,
+          "state_geometry" = geometry)  
+
+# State abbreviations
+
+# c <- read_excel("data/state_abbreviations.xlsx")
+
+# Vaccines data
+
+vaccines_text <- getURL("https://raw.githubusercontent.com/youyanggu/covid19-cdc-vaccination-data/main/aggregated_adjusted.csv")
+vaccines <- read_csv(vaccines_text) %>% 
+  clean_names() %>% 
+  select(date, 
+         "pop" = census2019,
+         "state" = long_name,
+         "total_doses_administered" = doses_administered,
+         "seven_day_avg_doses_adm" = doses_administered_daily_7day_avg,
+         "daily_doses_administered" = doses_distributed_daily) %>% 
+  filter(!(state %in% c("American Samoa",
+                        "Bureau of Prisons",
+                        "Dept of Defense",
+                        "Federated States of Micronesia",
+                        "Guam",
+                        "Indian Health Svc",
+                        "Long Term Care",
+                        "Marshall Islands",
+                        "Northern Mariana Islands",
+                        "Puerto Rico",
+                        "Republic of Palau",
+                        "Veterans Health",
+                        "Virgin Islands",
+                        "United States"))) %>% 
+  slice_max(order_by = date, n = 1) %>% 
+  mutate(state = case_when(state == "New York State" ~ "New York",
+                           state != "New York State" ~ state))
+
+vaccines %>% 
+  summarize(totalpop = sum(pop),
+            totaldoses = sum(total_doses_administered))
 ```

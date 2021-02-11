@@ -1,0 +1,24 @@
+---
+title: "supporting_file"
+author: "Gabe Cederberg"
+date: "2/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+bs_theme(
+  bg = "#101010", fg = "#FDF7F7", primary = "#ED79F9", 
+  base_font = font_google("Prompt"),
+  code_font = font_google("JetBrains Mono")
+) %>%
+  bs_theme_preview()
+```
+
+```{r}
+library(shiny)
+sessionInfo()
+```

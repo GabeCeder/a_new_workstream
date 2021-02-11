@@ -15,6 +15,8 @@ library(tidycensus)
 library(plotly)
 library(bslib)
 
+end_date <- "2021-02-11"
+
 # Census API Key
 
 Sys.getenv("CENSUS_API_KEY")
@@ -44,6 +46,9 @@ ui <- fluidPage(
     
     h1(strong("Mapping COVID-19 in the United States", 
               style = "color: white"), align = "center"),
+    h2(paste("Updated ", end_date, sep = ""),
+              style = "color: white", align = "center"),
+    br(),
     
     
     # Create the navigation bar, while making the title blank
@@ -71,14 +76,14 @@ ui <- fluidPage(
                                  column(width = 4, 
                                         selectInput(inputId = "select_time",
                                                     label = "",
-                                                    choices = c("Current Daily Level",
+                                                    choices = c("Current Daily Level (7-Day Avg)",
                                                                 "Change Compared to 7 Days Ago",
                                                                 "Cumulative All-Time Total"),
                                                     multiple = FALSE,
                                                     selected = "Current ")
                                  ),
                                  column(width = 4, 
-                                        selectInput(inputId = "select_time",
+                                        selectInput(inputId = "select_cut",
                                                     label = "",
                                                     choices = c("Per 100K People",
                                                                 "Raw Total"),
@@ -92,82 +97,7 @@ ui <- fluidPage(
     ),
                                  
                                  
-                                 
-                                 
-                                 
-               #                   
-               #              
-               #              fluidRow(column(width = 4, wellPanel("Bottom row, column 1, width 4")),
-               #                       column(width = 8, wellPanel("Bottom row, column 2, width 8"))))
-               #              
-               #              column(4,
-               #                     
-               #                     wellPanel(
-               #                         wellPanel(h1(strong("Explore the Dataset"), align = "center"),
-               #                                   h3("County Case Totals on May 14th", align = "center")
-               #                         ),
-               #                         # Create a selectInput for the user to select which states to view 
-               #                         
-               #                         selectInput(inputId = "select_state",
-               #                                     label = "Select which states to observe",
-               #                                     choices = c("Alabama",
-               #                                                 #                                                          "Alaska",
-               #                                                 "Arizona",
-               #                                                 "Arkansas",
-               #                                                 "California",
-               #                                                 "Colorado",
-               #                                                 "Connecticut",
-               #                                                 "Delaware",
-               #                                                 "Florida",
-               #                                                 "Georgia",
-               #                                                 #                                                           "Hawaii",
-               #                                                 "Idaho",
-               #                                                 "Illinois",
-               #                                                 "Indiana",
-               #                                                 "Iowa",
-               #                                                 "Kansas",
-               #                                                 "Kentucky",
-               #                                                 "Louisiana",
-               #                                                 "Maine",
-               #                                                 "Maryland",
-               #                                                 "Massachusetts",
-               #                                                 "Michigan",
-               #                                                 "Minnesota",
-               #                                                 "Mississippi",
-               #                                                 "Missouri",
-               #                                                 "Montana",
-               #                                                 "Nebraska",
-               #                                                 "Nevada",
-               #                                                 "New Hampshire",
-               #                                                 "New Jersey",
-               #                                                 "New Mexico",
-               #                                                 "New York",
-               #                                                 "North Carolina",
-               #                                                 "North Dakota",
-               #                                                 "Ohio",
-               #                                                 "Oklahoma",
-               #                                                 "Oregon",
-               #                                                 "Pennsylvania",
-               #                                                 "Rhode Island",
-               #                                                 "South Carolina",
-               #                                                 "South Dakota",
-               #                                                 "Tennessee",
-               #                                                 "Texas",
-               #                                                 "Utah",
-               #                                                 "Vermont",
-               #                                                 "Virginia",
-               #                                                 "Washington",
-               #                                                 "West Virginia",
-               #                                                 "Wisconsin",
-               #                                                 "Wyoming"),
-               #                                     multiple = TRUE,
-               #                                     selected = "Louisiana"),
-               #                         
-               #                         checkboxInput(inputId = "select_view",
-               #                                       label = "View Cases per Capita",
-               #                                       value = TRUE)
-               #                     )
-               #              ),
+                               
                #              
                #              column(7, 
                #                     
@@ -176,7 +106,7 @@ ui <- fluidPage(
                #                               # Output the plot comparing three types of wins to
                #                               # the finish place of a contestant
                #                               
-               #                               plotlyOutput("state_cases"),
+               #                               plotlyOutput("us_map"),
                #                               br()
                #                     )
                #              )
@@ -188,47 +118,58 @@ ui <- fluidPage(
     
     # Add name 
     
-    h3(strong("Compiled by Gabe Cederberg", style = "color:white"), align = "center"),
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    # Application title
-    titlePanel("Old Faithful Geyser Data"),
-
-    # Sidebar with a slider input for number of bins 
-    sidebarLayout(
-        sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
-        ),
-
-        # Show a plot of the generated distribution
-        mainPanel(
-           plotOutput("distPlot")
-        )
-    )
+    h3(strong("Compiled by Gabe Cederberg", style = "color:white"), align = "center")
 )
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
 
-    output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white')
+    output$us_map <- renderPlotly ({
+        
+        # Require that an input is put in place
+        
+        req(input$select_view, 
+            input$select_time,
+            input$select_cut)
+        
+        x <- county_data
+        
+        if (input$select_state != "All") {
+            x <- filter(x, state %in% c(input$select_state))
+        }
+        
+        if (input$select_view == FALSE) {
+            a <- x %>% ggplot(mapping = aes(fill = cases, geometry = geometry,
+                                            text = paste("County:", county, "<br>",
+                                                         "State:", state, "<br>",
+                                                         "Cases:", cases, "<br>"))) +
+                geom_sf(data = x) +
+                scale_fill_viridis_c(option = "plasma") +
+                labs(caption = "Sources: The New York Times and the American Community Survey 2014-2018",
+                     fill = "Total Cases") +
+                theme_void()
+            
+            ggplotly(a, tooltip = "text")
+            
+        }
+        
+        else {
+            b <- x %>% ggplot(mapping = aes(fill = cases_per_thousand, geometry = geometry,
+                                            text = paste("County:", county, "<br>",
+                                                         "State:", state, "<br>",
+                                                         "Cases per Thousand:", round(cases_per_thousand, 2), "<br>"))) +
+                geom_sf(data = x) +
+                scale_fill_viridis_c(option = "plasma") +
+                labs(caption = "Sources: The New York Times and the American Community Survey 2014-2018",
+                     fill = "Cases Per 1,000") +
+                #     theme(fill.position = element_blank()) +
+                theme_void()  
+            
+            ggplotly(b, tooltip = "text")
+        }
+        
     })
+
 }
 
 # Run the application 

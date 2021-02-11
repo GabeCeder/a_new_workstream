@@ -37,10 +37,10 @@ options(tigris_use_cache = TRUE)
 ```
 
 ```{r}
-end_date <- "2021-02-09"
-theme1 <- theme(plot.title = element_text(size = 13),
+end_date <- "2021-02-11"
+theme2 <- theme(plot.title = element_blank(),
         legend.title = element_blank(),
-        legend.text = element_text(size = 10),
+        legend.text = element_blank(),
         legend.position = "right",
         legend.key.width = unit(0.5, "cm"))
 ```
@@ -64,7 +64,8 @@ state <- read_csv(state_text) %>%
   mutate(deaths_7day_avg =  rollapply(new_deaths, 7, mean, fill = NA, align = 'right')) %>% 
   mutate(delta_deaths_WoW = 100 * (0 - (1 - (deaths_7day_avg / lag(deaths_7day_avg, 7, default = 0, order_by = date))))) %>% 
   slice_max(order_by = date, n = 1) %>% 
-  select(state, 
+  select(date,
+         state, 
          cases_7day_avg,
          delta_cases_WoW,
          "cumulative_cases" = cases,
@@ -82,7 +83,7 @@ state_pop <- get_acs(geography = "state",
   clean_names() %>% 
    select(geoid, 
           state_name = name, 
-          "pop" = estimate,
+        #  "pop" = estimate,
           "state_geometry" = geometry)  
 
 # State abbreviations
@@ -124,11 +125,24 @@ vaccines <- read_csv(vaccines_text) %>%
 ```
 
 ```{r}
+a <- vaccines %>% 
+  left_join(state, by = "state") 
 
-vaccines %>% 
-  left
+a$total_doses_administered
+
+
+
+b <- state_pop %>% 
+  right_join(a, by = c("state_name" = "state"))
 
 ```
+
+```{r}
+
+saveRDS(b, file = paste("data_files/map_data", end_date, ".rds", sep = ""))
+
+```
+
 
 
 

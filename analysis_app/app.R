@@ -36,7 +36,7 @@ theme2 <- theme(plot.title = element_blank(),
                 legend.position = "bottom",
                 legend.key.width = unit(0.5, "cm"),
                 legend.direction = "horizontal",
-                legend.text = element_text(color = "white", size = 12),
+                legend.text = element_text(color = "white", size = 12, face = "bold"),
                 panel.grid.major = element_blank(), 
                 panel.grid.minor = element_blank(),
                 panel.background = element_rect(fill = "transparent", colour = NA),
@@ -82,13 +82,14 @@ ui <- fluidPage(
                
                # Create first tab
                
-               tabPanel("Maps",
+               tabPanel("State Level",
                         
                     fluidRow(
                             
                         
                         column(width = 3,
                                
+                               br(),
                                br(),
                                
                                selectInput(inputId = "select_view",
@@ -132,44 +133,33 @@ ui <- fluidPage(
                         )
                                
                                )
+               ),
+               
+               tabPanel("County Level",
+                        
+                        fluidRow(
+                            
+                            column(width = 10)
+                        )
+               ),
+               
+               tabPanel("About the Data",
+                        
+                        fluidRow(
+                            
+                            column(width = 10)
+                        )
+               ),
+               
+               tabPanel("Contact",
+                        
+                        fluidRow(
+                            
+                            column(width = 10)
+                        )
                )
                
                ),
-
-                        
-                        
-                        
-               #          fluidRow(column(width = 4, 
-               #                          selectInput(inputId = "select_view",
-               #                                      label = "",
-               #                                      choices = c("Cases" = "cases",
-               #                                                  "Deaths" = "deaths",
-               #                                                  "Hospitalizations" = "hosp",
-               #                                                  "Vaccines Administered" = "vax"),
-               #                                      multiple = FALSE,
-               #                                      selected = "Cases")
-               #                   ),
-               #                   column(width = 4, 
-               #                          selectInput(inputId = "select_time",
-               #                                      label = "",
-               #                                      choices = c("Current Daily Level (7-Day Avg)" = "today",
-               #                                                  "% Change Compared to 7 Days Ago" = "WoW",
-               #                                                  "Cumulative All-Time Total" = "cumulative"),
-               #                                      multiple = FALSE,
-               #                                      selected = "Current ")
-               #                   ),
-               #                   column(width = 4, 
-               #                          selectInput(inputId = "select_cut",
-               #                                      label = "",
-               #                                      choices = c("Per 100K People" = "pc",
-               #                                                  "Raw Total" = "raw"),
-               #                                      multiple = FALSE,
-               #                                      selected = "Per 100K People")
-               #                   )
-               #          ),
-               #          fluidRow(column(width = 12, 
-               #                          wellPanel(plotlyOutput("us_map"))))
-               # )
 
     # Add name 
     
@@ -234,46 +224,8 @@ server <- function(input, output) {
              
              ggplotly(map2, tooltip = "text")
              
-             
          }
         
-        # 
-        # x <- county_data
-        # 
-        # if (input$select_state != "All") {
-        #     x <- filter(x, state %in% c(input$select_state))
-        # }
-        # 
-        # if (input$select_view == FALSE) {
-        #     a <- x %>% ggplot(mapping = aes(fill = cases, geometry = geometry,
-        #                                     text = paste("County:", county, "<br>",
-        #                                                  "State:", state, "<br>",
-        #                                                  "Cases:", cases, "<br>"))) +
-        #         geom_sf(data = x) +
-        #         scale_fill_viridis_c(option = "plasma") +
-        #         labs(caption = "Sources: The New York Times and the American Community Survey 2014-2018",
-        #              fill = "Total Cases") +
-        #         theme_void()
-        #     
-        #     ggplotly(a, tooltip = "text")
-        #     
-        # }
-        # 
-        # else {
-        #     b <- x %>% ggplot(mapping = aes(fill = cases_per_thousand, geometry = geometry,
-        #                                     text = paste("County:", county, "<br>",
-        #                                                  "State:", state, "<br>",
-        #                                                  "Cases per Thousand:", round(cases_per_thousand, 2), "<br>"))) +
-        #         geom_sf(data = x) +
-        #         scale_fill_viridis_c(option = "plasma") +
-        #         labs(caption = "Sources: The New York Times and the American Community Survey 2014-2018",
-        #              fill = "Cases Per 1,000") +
-        #         #     theme(fill.position = element_blank()) +
-        #         theme_void()  
-        #     
-        #     ggplotly(b, tooltip = "text")
-        # }
-        # 
     })
     
     output$background <- renderImage({

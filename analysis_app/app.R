@@ -30,6 +30,8 @@ options(scipen=999)
 # Load data
 
 map_data <- read_rds("data_files/map_data2021-02-11.rds")
+geo <- read_rds("data_files/geo_data.rds")
+
 
 # Images for use later
 #                        https://phil.cdc.gov//PHIL_Images/23354/23354_lores.jpg
@@ -71,8 +73,8 @@ ui <- fluidPage(
                                                     label = "",
                                                     choices = c("Cases" = "cases",
                                                                 "Deaths" = "deaths",
-                                                                "Hospitalizations",
-                                                                "Vaccines Administered"),
+                                                                "Hospitalizations" = "hosp",
+                                                                "Vaccines Administered" = "vax"),
                                                     multiple = FALSE,
                                                     selected = "Cases")
                                  ),
@@ -115,10 +117,13 @@ server <- function(input, output) {
             input$select_time,
             input$select_cut)
         
+        map1 <- map_data %>% 
+            filter(slice1 == input$select_view)
+        
         if (input$select_view == "cases") {
             map1 <- map_data %>% ggplot(mapping = aes(fill = cases_7day_avg,
                                                       geometry = state_geometry,
-                                                      text = paste(state_name, "<br>",
+                                                      text = paste(state, "<br>",
                                                                    "Cases:", cases_7day_avg, "<br>"))) +
                 geom_sf(color = alpha("white", 1 / 2), size = 0.1) +
                 geom_sf(data = map_data, fill = NA, color = "white") +

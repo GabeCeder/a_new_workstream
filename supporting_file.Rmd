@@ -82,7 +82,7 @@ state_pop <- get_acs(geography = "state",
                   shift_geo = TRUE) %>% 
   clean_names() %>% 
    select(geoid, 
-          state_name = name, 
+          "state" = name, 
         #  "pop" = estimate,
           "state_geometry" = geometry)  
 
@@ -116,35 +116,58 @@ vaccines <- read_csv(vaccines_text) %>%
                         "Virgin Islands",
                         "United States"))) %>% 
   group_by(state) %>% 
-  mutate(delta_vaccines_WoW = 100 * (0 - (1 - (seven_day_avg_doses_adm / 
+  mutate(delta_doses_WoW = 100 * (0 - (1 - (seven_day_avg_doses_adm / 
                                                  lag(seven_day_avg_doses_adm, 7, default = 0, order_by = date))))) %>% 
   slice_max(order_by = date, n = 1) %>% 
   mutate(state = case_when(state == "New York State" ~ "New York",
                            state != "New York State" ~ state))
 
+pop <- vaccines %>% 
+  select(state, pop)
 ```
 
 ```{r}
 a <- vaccines %>% 
+  select(-pop) %>% 
   left_join(state, by = "state") 
 
-a$total_doses_administered <- round(a$total_doses_administered, 2)
-a %>% select(-date.x, -date.y) %>% pivot_longer(!state, names_to = "view", values_to = "number")
+b <- a %>% select(-date.x, -date.y) %>% pivot_longer(!state, names_to = "view", values_to = "number")
 
+c <- b %>% 
+  left_join(pop, by = "state") %>% 
+  mutate(per_100K_number = case_when(view %in% c("delta_doses_WoW",
+                                               "delta_cases_WoW",
+                                               "delta_deaths_WoW") ~ number, 
+                                     !(view %in% c("delta_doses_WoW",
+                                               "delta_cases_WoW",
+                                               "delta_deaths_WoW")) ~ number / pop * 100000)) %>% 
+  select(-pop)
 
-b <- state_pop %>% 
-  right_join(a, by = c("state_name" = "state"))
+c$number <- round(c$number, 0)
+c$per_100K_number <- round(c$per_100K_number, 0)
+
+c %>% 
+  mutate(slice1 = case_when(grepl("doses", view) ~ "vax",
+                           grepl("cases", view) ~ "cases",
+                           grepl("deaths", view) ~ "deaths",
+                           grepl("hosp", view) ~ "hosp"))
+
+#b <- state_pop %>% 
+#  right_join(a, by = c("state_name" = "state"))
 
 ```
 
 ```{r}
 
-saveRDS(b, file = paste("data_files/map_data", end_date, ".rds", sep = ""))
+saveRDS(c, file = paste("analysis_app/data_files/map_data", end_date, ".rds", sep = ""))
 
 ```
 
 
 
+```{r}
+saveRDS(state_pop, file = "analysis_app/data_files/geo_data.rds")
+```
 
 
 ```{r}

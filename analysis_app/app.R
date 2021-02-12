@@ -33,9 +33,17 @@ options(scipen=999)
 geo <- read_rds("data_files/geo_data.rds")
 theme2 <- theme(plot.title = element_blank(),
                 legend.title = element_blank(),
-                legend.text = element_blank(),
-                legend.position = "right",
-                legend.key.width = unit(0.5, "cm"))
+                legend.position = "bottom",
+                legend.key.width = unit(0.5, "cm"),
+                legend.direction = "horizontal",
+                legend.text = element_text(color = "white", size = 12),
+                panel.grid.major = element_blank(), 
+                panel.grid.minor = element_blank(),
+                panel.background = element_rect(fill = "transparent", colour = NA),
+                plot.background = element_rect(fill = "transparent", colour = NA))
+
+style2 <- scale_fill_gradientn(name = "", colors = c("#dde6fb", "#0b2358"))
+
 
 # Images for use later
 #                        https://phil.cdc.gov//PHIL_Images/23354/23354_lores.jpg
@@ -51,7 +59,11 @@ ui <- fluidPage(
     
     # Set background image to an image of COVID-19  
     
-    setBackgroundImage(src = "https://heller.brandeis.edu/lurie/images/stock-images/coronavirus.jpg"),
+    setBackgroundImage(src = 
+                           #"https://drive.google.com/file/d/1HFhzmUurOMS0t5iaym9EFEHZ7KgDXdVu/view"),
+                      #         plotOutput("background"))),
+                           "coronavirus3.jpg"),
+                 #      https://heller.brandeis.edu/lurie/images/stock-images/coronavirus.jpg
     
     theme = bs_theme(version = 4, bootswatch = "minty"),
         #shinytheme("superhero"),
@@ -60,54 +72,108 @@ ui <- fluidPage(
     
     h1(strong("Mapping COVID-19 in the United States", 
               style = "color: white"), align = "center"),
-    h3(paste("Data Last Updated ", end_date, sep = ""),
+    h4(paste("Data Last Updated ", end_date, sep = ""),
               style = "color: white", align = "center"),
     br(),
     
     # Create the navigation bar, while making the title blank
     
-    navbarPage("", 
+    navbarPage("", position = "static-top",
                
                # Create first tab
                
                tabPanel("Maps",
                         
-                        fluidRow(column(width = 4, 
-                                        selectInput(inputId = "select_view",
-                                                    label = "",
-                                                    choices = c("Cases" = "cases",
-                                                                "Deaths" = "deaths",
-                                                                "Hospitalizations" = "hosp",
-                                                                "Vaccines Administered" = "vax"),
-                                                    multiple = FALSE,
-                                                    selected = "Cases")
-                                 ),
-                                 column(width = 4, 
-                                        selectInput(inputId = "select_time",
-                                                    label = "",
-                                                    choices = c("Current Daily Level (7-Day Avg)" = "today",
-                                                                "% Change Compared to 7 Days Ago" = "WoW",
-                                                                "Cumulative All-Time Total" = "cumulative"),
-                                                    multiple = FALSE,
-                                                    selected = "Current ")
-                                 ),
-                                 column(width = 4, 
-                                        selectInput(inputId = "select_cut",
-                                                    label = "",
-                                                    choices = c("Per 100K People" = "pc",
-                                                                "Raw Total" = "raw"),
-                                                    multiple = FALSE,
-                                                    selected = "Per 100K People")
-                                 )
-                        ),
-                        fluidRow(column(width = 12, 
-                                        wellPanel(plotlyOutput("us_map"))))
+                    fluidRow(
+                            
+                        
+                        column(width = 3,
+                               
+                               br(),
+                               
+                               selectInput(inputId = "select_view",
+                                           label = "",
+                                           choices = c("Cases" = "cases",
+                                                       "Deaths" = "deaths",
+                                                       "Hospitalizations" = "hosp",
+                                                       "Vaccines Administered" = "vax"),
+                                           multiple = FALSE,
+                                           selected = "Cases"),
+                               
+                               br(),
+                               br(),
+                               br(),
+                               
+                               selectInput(inputId = "select_time",
+                                           label = "",
+                                           choices = c("Current Daily Level (7-Day Avg)" = "today",
+                                                       "% Change Compared to 7 Days Ago" = "WoW",
+                                                       "Cumulative All-Time Total" = "cumulative"),
+                                           multiple = FALSE,
+                                           selected = "Current "),
+                               
+                               br(),
+                               br(),
+                               br(),
+                               
+                               selectInput(inputId = "select_cut",
+                                           label = "",
+                                           choices = c("Per 100K People" = "pc",
+                                                       "Raw Total" = "raw"),
+                                           multiple = FALSE,
+                                           selected = "Per 100K People")
+                               ),
+                        
+                   #     column(width = 2),
+                        
+                        
+                        column(width = 9, 
+                               plotlyOutput("us_map", width = 1000, height = 600)
+                        )
+                               
+                               )
                )
-    ),
-    
+               
+               ),
+
+                        
+                        
+                        
+               #          fluidRow(column(width = 4, 
+               #                          selectInput(inputId = "select_view",
+               #                                      label = "",
+               #                                      choices = c("Cases" = "cases",
+               #                                                  "Deaths" = "deaths",
+               #                                                  "Hospitalizations" = "hosp",
+               #                                                  "Vaccines Administered" = "vax"),
+               #                                      multiple = FALSE,
+               #                                      selected = "Cases")
+               #                   ),
+               #                   column(width = 4, 
+               #                          selectInput(inputId = "select_time",
+               #                                      label = "",
+               #                                      choices = c("Current Daily Level (7-Day Avg)" = "today",
+               #                                                  "% Change Compared to 7 Days Ago" = "WoW",
+               #                                                  "Cumulative All-Time Total" = "cumulative"),
+               #                                      multiple = FALSE,
+               #                                      selected = "Current ")
+               #                   ),
+               #                   column(width = 4, 
+               #                          selectInput(inputId = "select_cut",
+               #                                      label = "",
+               #                                      choices = c("Per 100K People" = "pc",
+               #                                                  "Raw Total" = "raw"),
+               #                                      multiple = FALSE,
+               #                                      selected = "Per 100K People")
+               #                   )
+               #          ),
+               #          fluidRow(column(width = 12, 
+               #                          wellPanel(plotlyOutput("us_map"))))
+               # )
+
     # Add name 
     
-    h3(strong("Compiled by Gabe Cederberg", style = "color:white"), align = "center")
+    h4("Compiled by Gabe Cederberg", style = "color:white", align = "right")
 )
 
 # Define server logic required to draw a histogram
@@ -138,12 +204,12 @@ server <- function(input, output) {
                                      direction = -1) +
                 theme_void() +
                 theme2 +
-                theme(panel.grid.major = element_blank(), 
-                      panel.grid.minor = element_blank(),
-                      panel.background = element_rect(fill = "transparent", colour = NA),
-                      plot.background = element_rect(fill = "transparent", colour = NA))
+                style2
             
-            ggplotly(map1, tooltip = "text")
+            ggplotly(map1, tooltip = "text") %>% 
+                layout(legend = list(
+                    orientation = "h"
+                ))
             
         }
         
@@ -162,12 +228,9 @@ server <- function(input, output) {
                  geom_sf(data = mapping, fill = NA, color = "white") +
                  scale_fill_viridis_c(option = "inferno", 
                                       direction = -1) +
-         #        theme_void() +
+                 theme_void() +
                  theme2 +
-                 theme(        panel.grid.major = element_blank(), 
-                               panel.grid.minor = element_blank(),
-                               panel.background = element_rect(fill = "transparent",colour = NA),
-                               plot.background = element_rect(fill = "transparent",colour = NA))
+                 style2
              
              ggplotly(map2, tooltip = "text")
              
@@ -212,6 +275,10 @@ server <- function(input, output) {
         # }
         # 
     })
+    
+    output$background <- renderImage({
+        list(src = "coronavirus.jpg")
+    }, deleteFile = FALSE) 
 
 }
 

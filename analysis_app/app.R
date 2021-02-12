@@ -17,7 +17,8 @@ library(bslib)
 
 # Set date
 
-end_date <- "2021-02-11"
+end_date <- "Feb. 12, 2021"
+map_data <- read_rds("data_files/map_data2021-02-12.rds")
 
 # Census API Key
 
@@ -29,9 +30,12 @@ options(scipen=999)
 
 # Load data
 
-map_data <- read_rds("data_files/map_data2021-02-11.rds")
 geo <- read_rds("data_files/geo_data.rds")
-
+theme2 <- theme(plot.title = element_blank(),
+                legend.title = element_blank(),
+                legend.text = element_blank(),
+                legend.position = "right",
+                legend.key.width = unit(0.5, "cm"))
 
 # Images for use later
 #                        https://phil.cdc.gov//PHIL_Images/23354/23354_lores.jpg
@@ -56,7 +60,7 @@ ui <- fluidPage(
     
     h1(strong("Mapping COVID-19 in the United States", 
               style = "color: white"), align = "center"),
-    h2(paste("Last Updated ", end_date, sep = ""),
+    h3(paste("Data Last Updated ", end_date, sep = ""),
               style = "color: white", align = "center"),
     br(),
     
@@ -81,17 +85,17 @@ ui <- fluidPage(
                                  column(width = 4, 
                                         selectInput(inputId = "select_time",
                                                     label = "",
-                                                    choices = c("Current Daily Level (7-Day Avg)",
-                                                                "% Change Compared to 7 Days Ago",
-                                                                "Cumulative All-Time Total"),
+                                                    choices = c("Current Daily Level (7-Day Avg)" = "today",
+                                                                "% Change Compared to 7 Days Ago" = "WoW",
+                                                                "Cumulative All-Time Total" = "cumulative"),
                                                     multiple = FALSE,
                                                     selected = "Current ")
                                  ),
                                  column(width = 4, 
                                         selectInput(inputId = "select_cut",
                                                     label = "",
-                                                    choices = c("Per 100K People",
-                                                                "Raw Total"),
+                                                    choices = c("Per 100K People" = "pc",
+                                                                "Raw Total" = "raw"),
                                                     multiple = FALSE,
                                                     selected = "Per 100K People")
                                  )
@@ -117,25 +121,58 @@ server <- function(input, output) {
             input$select_time,
             input$select_cut)
         
-        map1 <- map_data %>% 
-            filter(slice1 == input$select_view)
-        
-        if (input$select_view == "cases") {
-            map1 <- map_data %>% ggplot(mapping = aes(fill = cases_7day_avg,
-                                                      geometry = state_geometry,
-                                                      text = paste(state, "<br>",
-                                                                   "Cases:", cases_7day_avg, "<br>"))) +
+        if (input$select_cut == "pc") {
+            gem <- map_data %>% 
+                filter(slice1 == input$select_view & 
+                           slice2 == input$select_time)
+            
+            mapping <- geo %>% right_join(gem, by = "state")
+            
+            map1 <- ggplot(data = mapping, mapping = aes(fill = per_100K_number,
+                                     geometry = mapping$state_geometry,
+                                     text = paste(state, "<br>",
+                                                  "Value:", viz_per_100K_number, "<br>"))) +
                 geom_sf(color = alpha("white", 1 / 2), size = 0.1) +
-                geom_sf(data = map_data, fill = NA, color = "white") +
+                geom_sf(data = mapping, fill = NA, color = "white") +
                 scale_fill_viridis_c(option = "inferno", 
                                      direction = -1) +
-                theme_void()
-                
+                theme_void() +
+                theme2 +
+                theme(panel.grid.major = element_blank(), 
+                      panel.grid.minor = element_blank(),
+                      panel.background = element_rect(fill = "transparent", colour = NA),
+                      plot.background = element_rect(fill = "transparent", colour = NA))
             
-         #   map1
             ggplotly(map1, tooltip = "text")
-        
+            
         }
+        
+         else {
+             gem <- map_data %>% 
+                 filter(slice1 == input$select_view & 
+                            slice2 == input$select_time)
+             
+             mapping <- geo %>% right_join(gem, by = "state")
+             
+             map2 <- ggplot(data = mapping, mapping = aes(fill = number,
+                                                          geometry = mapping$state_geometry,
+                                                          text = paste(state, "<br>",
+                                                                       "Value:", viz_number, "<br>"))) +
+                 geom_sf(color = alpha("white", 1 / 2), size = 0.1) +
+                 geom_sf(data = mapping, fill = NA, color = "white") +
+                 scale_fill_viridis_c(option = "inferno", 
+                                      direction = -1) +
+         #        theme_void() +
+                 theme2 +
+                 theme(        panel.grid.major = element_blank(), 
+                               panel.grid.minor = element_blank(),
+                               panel.background = element_rect(fill = "transparent",colour = NA),
+                               plot.background = element_rect(fill = "transparent",colour = NA))
+             
+             ggplotly(map2, tooltip = "text")
+             
+             
+         }
         
         # 
         # x <- county_data

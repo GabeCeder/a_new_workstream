@@ -37,7 +37,7 @@ options(tigris_use_cache = TRUE)
 ```
 
 ```{r}
-end_date <- "2021-02-11"
+end_date <- "2021-02-12"
 theme2 <- theme(plot.title = element_blank(),
         legend.title = element_blank(),
         legend.text = element_blank(),
@@ -66,10 +66,10 @@ state <- read_csv(state_text) %>%
   slice_max(order_by = date, n = 1) %>% 
   select(date,
          state, 
-         cases_7day_avg,
+         "today_cases_7day_avg" = cases_7day_avg,
          delta_cases_WoW,
          "cumulative_cases" = cases,
-         deaths_7day_avg,
+         "today_deaths_7day_avg" = deaths_7day_avg,
          delta_deaths_WoW,
          "cumulative_deaths" = deaths)
 
@@ -98,9 +98,10 @@ vaccines <- read_csv(vaccines_text) %>%
   select(date, 
          "pop" = census2019,
          "state" = long_name,
-         "total_doses_administered" = doses_administered,
-         "seven_day_avg_doses_adm" = doses_administered_daily_7day_avg,
-         "daily_doses_administered" = doses_distributed_daily) %>% 
+         "cumulative_doses_administered" = doses_administered,
+         "today_seven_day_avg_doses_adm" = doses_administered_daily_7day_avg,
+     #    "daily_doses_administered" = doses_distributed_daily
+         ) %>% 
   filter(!(state %in% c("American Samoa",
                         "Bureau of Prisons",
                         "Dept of Defense",
@@ -116,8 +117,8 @@ vaccines <- read_csv(vaccines_text) %>%
                         "Virgin Islands",
                         "United States"))) %>% 
   group_by(state) %>% 
-  mutate(delta_doses_WoW = 100 * (0 - (1 - (seven_day_avg_doses_adm / 
-                                                 lag(seven_day_avg_doses_adm, 7, default = 0, order_by = date))))) %>% 
+  mutate(delta_doses_WoW = 100 * (0 - (1 - (today_seven_day_avg_doses_adm / 
+                                                 lag(today_seven_day_avg_doses_adm, 7, default = 0, order_by = date))))) %>% 
   slice_max(order_by = date, n = 1) %>% 
   mutate(state = case_when(state == "New York State" ~ "New York",
                            state != "New York State" ~ state))
@@ -143,15 +144,34 @@ c <- b %>%
                                                "delta_deaths_WoW")) ~ number / pop * 100000)) %>% 
   select(-pop)
 
-c$number <- round(c$number, 0)
-c$per_100K_number <- round(c$per_100K_number, 0)
+c$number <- round(c$number, 2)
+c$per_100K_number <- round(c$per_100K_number, 2)
 
-c %>% 
+d <- c %>% 
   mutate(slice1 = case_when(grepl("doses", view) ~ "vax",
                            grepl("cases", view) ~ "cases",
                            grepl("deaths", view) ~ "deaths",
-                           grepl("hosp", view) ~ "hosp"))
+                           grepl("hosp", view) ~ "hosp")) %>% 
+  mutate(slice2 = case_when(grepl("today", view) ~ "today",
+                            grepl("WoW", view) ~ "WoW",
+                            grepl("cumulative", view) ~ "cumulative")) %>% 
+  mutate(viz_number = comma(number),
+         viz_per_100K_number = comma(per_100K_number)) %>% 
+  separate(viz_number, c("viz_number"), "\\.") %>% 
+  separate(viz_per_100K_number, c("viz_per_100K_number"), "\\.") %>% 
+  mutate(viz_number = case_when(slice2 == "WoW" ~ paste(viz_number, "%", sep = ""),
+                            slice2 != "WoW" ~ viz_number),
+         viz_per_100K_number = case_when((slice2 == "WoW" ~ paste(viz_per_100K_number, "%", sep = "")),
+                                          slice2 != "WoW" ~ viz_per_100K_number)) %>% 
+  mutate(viz_number = case_when(slice2 == "WoW" & number > 0 ~ paste("+", viz_number, sep = ""),
+                                slice2 != "WoW" | number <= 0 ~ viz_number),
+         viz_per_100K_number = case_when(slice2 == "WoW" & per_100K_number > 0 ~ paste("+", viz_per_100K_number, sep = ""),
+                                         slice2 != "Wow" | per_100K_number <= 0 ~ viz_per_100K_number))
 
+d
+
+```
+```{r}
 #b <- state_pop %>% 
 #  right_join(a, by = c("state_name" = "state"))
 
@@ -159,7 +179,7 @@ c %>%
 
 ```{r}
 
-saveRDS(c, file = paste("analysis_app/data_files/map_data", end_date, ".rds", sep = ""))
+saveRDS(d, file = paste("analysis_app/data_files/map_data", end_date, ".rds", sep = ""))
 
 ```
 

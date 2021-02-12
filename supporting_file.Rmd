@@ -128,8 +128,8 @@ vaccines <- read_csv(vaccines_text) %>%
 a <- vaccines %>% 
   left_join(state, by = "state") 
 
-a$total_doses_administered
-
+a$total_doses_administered <- round(a$total_doses_administered, 2)
+a %>% select(-date.x, -date.y) %>% pivot_longer(!state, names_to = "view", values_to = "number")
 
 
 b <- state_pop %>% 

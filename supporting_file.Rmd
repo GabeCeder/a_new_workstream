@@ -375,16 +375,24 @@ vaccines2 <- read_csv(vaccines_text) %>%
   summarize(new_doses = sum(new_doses),
             today_seven_day_avg_doses_adm = sum(today_seven_day_avg_doses_adm)) %>% 
   mutate(slice1 = "vax")
-  
+
+
+avg_daily_stat <- vaccines2 %>% 
+  slice_max(order_by = date) %>% 
+    filter(slice1 == "vax") %>% 
+  summarize(millions = today_seven_day_avg_doses_adm / 1000000) %>% 
+  pull(millions) %>% 
+  round(2)
+
 vaccines2 %>% filter(slice1 == "vax") %>% 
   ggplot() +
-    geom_line(aes(x = date, y = today_seven_day_avg_doses_adm / 1000), color = "white") +
-    geom_col(aes(x = date, y = new_doses / 1000), fill = "white", color = "white", alpha = 0.4) +
+    geom_line(aes(x = date, y = today_seven_day_avg_doses_adm / 1000000), color = "white") +
+    geom_col(aes(x = date, y = new_doses / 1000000), fill = "white", color = "white", alpha = 0.4) +
     # scale_x_date(date_labels = "%B", 
     #            date_breaks = "months", 
     #            name = "") +
-    labs(x = "", y = "pasteDailyinput$select_view (thousands)",
-         title = paste("In the past week, the United States averaged ", avg_daily_stat, " vaccinations per day.", sep = "")) +
+    labs(x = "", y = "Daily Vaccine Doses Administered (millions)",
+         title = paste("In the past week, the United States averaged ", avg_daily_stat, " million vaccinations per day.", sep = "")) +
     theme3
 ```
 

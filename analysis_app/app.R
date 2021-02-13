@@ -24,6 +24,10 @@ end_date <- "Feb. 12, 2021"
 map_data <- read_rds("data_files/map_data2021-02-13.rds")
 county_map_data <- read_rds("data_files/county_map_data2021-02-13.rds")
 
+chart_data <- read_rds("data_files/case_chart_data2021-02-12.rds")
+vax_chart_data <- read_rds("data_files/vax_chart_data2021-02-12.rds")
+
+
 geo <- read_rds("data_files/geo_data.rds")
 county_geo <- read_rds("data_files/county_geo_data.rds")
 
@@ -51,7 +55,7 @@ theme3 <- theme(plot.title = element_text(color = "white"),
                 panel.grid.major = element_blank(), 
                 panel.grid.minor = element_blank(),
                 panel.background = element_rect(fill = "transparent", colour = NA),
-                plot.background = element_rect(fill = "black", colour = NA),
+                plot.background = element_rect(fill = "transparent", colour = NA),
                 panel.grid.major.y = element_line(size = 0.5, linetype = 'solid',
                                                   colour = "gray20"),
                 axis.title.y = element_text(color = "white", size = 12),
@@ -360,25 +364,33 @@ server <- function(input, output) {
         
         req(input$select_view)
         
-        aa <- test_data %>% 
-            filter(view == input$select_view3)
+        if (input$select_view == "vax") {
+            
+            
+            avg_daily_stat <- vax_chart_data %>% 
+                slice_max(order_by = date) %>% 
+                filter(slice1 == "vax") %>% 
+                summarize(millions = today_seven_day_avg_doses_adm / 1000000) %>% 
+                pull(millions) %>% 
+                round(2)
+            
+            chart <- vaccines2 %>% filter(slice1 == input$select_view) %>% 
+                ggplot() +
+                geom_line(aes(x = date, y = today_seven_day_avg_doses_adm / 1000000), color = "white") +
+                geom_col(aes(x = date, y = new_doses / 1000000), fill = "white", color = "white", alpha = 0.4) +
+                # scale_x_date(date_labels = "%B", 
+                #            date_breaks = "months", 
+                #            name = "") +
+                labs(x = "", y = "Daily Vaccine Doses Administered (millions)",
+                     title = paste("In the past week, the United States averaged ", avg_daily_stat, " million vaccinations per day.", sep = "")) +
+                theme3
+            
+            ggplotly(chart)
+        }
         
-        bb <- test %>% 
-            right_join(aa, by = "fips")
-        
-        a <- bb %>% ggplot(aes(fill = number, geometry = geometry
-                               # ,
-                               # text = paste("County:", county.x, "<br>",
-                               #              "State:", state.x, "<br>",
-                               #              "Number:", number, "<br>"
-                              )) +
-            geom_sf(data = bb) +
-            scale_fill_viridis_c(option = "plasma") +
-            labs(caption = "Sources: The New York Times and the American Community Survey 2014-2018",
-                 fill = "Total Cases") +
-            theme_void()
-        
-        ggplotly(a)        
+        else {
+            
+        }
         
     })
     

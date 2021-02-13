@@ -25,6 +25,7 @@ library(patchwork)
 library(RCurl)
 library(readxl)
 library(zoo)
+library(sf)
 
 # Turn off scientific notation
 
@@ -45,6 +46,28 @@ theme2 <- theme(plot.title = element_blank(),
         legend.key.width = unit(0.5, "cm"))
 ```
 
+```{r}
+# Load county data
+
+county_pop <- get_acs(geography = "county",
+                  variables = c(pop = "B01003_001"), 
+                  year = 2018,
+                  geometry = TRUE, 
+                  shift_geo = TRUE) %>% 
+  clean_names() %>% 
+   select(
+     #geoid, 
+          name, 
+          "pop" = estimate,
+          geometry) %>% 
+  separate(col = name, c("county", "state"), sep = ", ") %>% 
+  mutate(county = str_remove_all(county, " County")) %>% 
+  mutate(county = str_remove_all(county, " Parish")) 
+
+county_pop_num <- county_pop %>% 
+  select(state, county, pop)
+```
+
 
 ```{r}
 # Case and death data
@@ -57,7 +80,6 @@ state <- read_csv(state_text) %>%
                                new_cases >= 0 ~ new_cases)) %>% 
   mutate(cases_7day_avg =  rollapply(new_cases, 7, mean, fill = NA, align = 'right')) %>% 
   mutate(delta_cases_WoW = 100 * (0 - (1 - (cases_7day_avg / lag(cases_7day_avg, 7, default = 0, order_by = date))))) %>% 
-  
   mutate(new_deaths = deaths - lag(deaths, k = 1)) %>% 
   mutate(new_deaths = case_when(new_deaths < 0 ~ 0,
                                new_deaths >= 0 ~ new_deaths)) %>% 
@@ -85,6 +107,7 @@ state_pop <- get_acs(geography = "state",
           "state" = name, 
         #  "pop" = estimate,
           "state_geometry" = geometry)  
+
 
 # State abbreviations
 
@@ -183,11 +206,138 @@ saveRDS(d, file = paste("analysis_app/data_files/map_data", end_date, ".rds", se
 
 ```
 
-
-
 ```{r}
 saveRDS(state_pop, file = "analysis_app/data_files/geo_data.rds")
 ```
+
+
+```{r}
+county_text <- getURL("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
+county <- read_csv(county_text)
+
+county$county <- gsub("DoÃ±a Ana", "Doña Ana", county$county)
+
+ff <- county %>% 
+  group_by(state, county) %>% 
+  mutate(new_cases = cases - lag(cases, k = 1)) %>% 
+  mutate(new_cases = case_when(new_cases < 0 ~ 0,
+                               new_cases >= 0 ~ new_cases)) %>% 
+  mutate(cases_7day_avg =  rollapply(new_cases, 7, mean, fill = NA, align = 'right')) %>% 
+  mutate(delta_cases_WoW = 100 * (0 - (1 - (cases_7day_avg / lag(cases_7day_avg, 7, default = 0, order_by = date))))) %>% 
+  mutate(new_deaths = deaths - lag(deaths, k = 1)) %>% 
+  mutate(new_deaths = case_when(new_deaths < 0 ~ 0,
+                               new_deaths >= 0 ~ new_deaths)) %>% 
+  mutate(deaths_7day_avg =  rollapply(new_deaths, 7, mean, fill = NA, align = 'right')) %>% 
+  mutate(delta_deaths_WoW = 100 * (0 - (1 - (deaths_7day_avg / lag(deaths_7day_avg, 7, default = 0, order_by = date))))) %>% 
+  slice_max(order_by = date, n = 1) %>% 
+  select(state, 
+         "today_cases_7day_avg" = cases_7day_avg,
+         delta_cases_WoW,
+         "cumulative_cases" = cases,
+         "today_deaths_7day_avg" = deaths_7day_avg,
+         delta_deaths_WoW,
+         "cumulative_deaths" = deaths) %>% 
+  pivot_longer(!c(state,county), names_to = "view", values_to = "number")
+  
+gg <- ff %>% 
+  left_join(county_pop_num, by = c("state", "county")) %>% 
+  mutate(per_100K_number = case_when(view %in% c("delta_doses_WoW",
+                                               "delta_cases_WoW",
+                                               "delta_deaths_WoW") ~ number, 
+                                     !(view %in% c("delta_doses_WoW",
+                                               "delta_cases_WoW",
+                                               "delta_deaths_WoW")) ~ number / pop * 100000)) %>% 
+  select(-pop, -geometry)
+
+gg$number <- round(gg$number, 2)
+gg$per_100K_number <- round(gg$per_100K_number, 2)
+
+hh <- gg %>% 
+  mutate(slice1 = case_when(grepl("doses", view) ~ "vax",
+                           grepl("cases", view) ~ "cases",
+                           grepl("deaths", view) ~ "deaths",
+                           grepl("hosp", view) ~ "hosp")) %>% 
+  mutate(slice2 = case_when(grepl("today", view) ~ "today",
+                            grepl("WoW", view) ~ "WoW",
+                            grepl("cumulative", view) ~ "cumulative")) %>% 
+  mutate(viz_number = comma(number),
+         viz_per_100K_number = comma(per_100K_number)) %>% 
+  separate(viz_number, c("viz_number"), "\\.") %>% 
+  separate(viz_per_100K_number, c("viz_per_100K_number"), "\\.") %>% 
+  mutate(viz_number = case_when(slice2 == "WoW" ~ paste(viz_number, "%", sep = ""),
+                            slice2 != "WoW" ~ viz_number),
+         viz_per_100K_number = case_when((slice2 == "WoW" ~ paste(viz_per_100K_number, "%", sep = "")),
+                                          slice2 != "WoW" ~ viz_per_100K_number)) %>% 
+  mutate(viz_number = case_when(slice2 == "WoW" & number > 0 ~ paste("+", viz_number, sep = ""),
+                                slice2 != "WoW" | number <= 0 ~ viz_number),
+         viz_per_100K_number = case_when(slice2 == "WoW" & per_100K_number > 0 ~ paste("+", viz_per_100K_number, sep = ""),
+                                         slice2 != "Wow" | per_100K_number <= 0 ~ viz_per_100K_number))
+```
+
+
+```{r}
+saveRDS(hh, file = paste("analysis_app/data_files/county_map_data", end_date, ".rds", sep = ""))
+
+```
+
+```{r}
+saveRDS(county_pop, file = "analysis_app/data_files/county_geo_data.rds")
+```
+
+```{r}
+county_pop
+state_pop
+
+both <- county_pop %>% 
+  st_join(state_pop, by = "state")
+
+both
+```
+
+
+```{r}
+
+test <- hh %>% 
+                filter(slice1 == "cases" & 
+                           slice2 == "cumulative")
+            
+            mapping <- county_pop %>% right_join(test, by = c("state", "county"))
+            
+ggplot() + 
+  # ,
+  #                                                        text = paste(county, "<br>",
+  #                                                                     state, "<br>",
+  #                                                                     "Value:", viz_per_100K_number, "<br>"))) +
+                 geom_sf(data = mapping, mapping = aes(fill = per_100K_number,
+                                                         geometry = geometry, 
+                                                       text = paste(county, "<br>",
+                                                                       state, "<br>",
+                                                                       "Value:", viz_per_100K_number, "<br>")), color = alpha("white", 1 / 2), size = 0.1) +
+                geom_sf(data = state_pop, aes(geometry = state_geometry), fill = NA, color = "white") +
+                theme_void() +
+                theme2
+            #    style2
+```
+
+
+```{r}
+county_pop <- get_acs(geography = "county",
+                  variables = c(pop = "B01003_001"), 
+                  year = 2018,
+                  geometry = TRUE, 
+                  shift_geo = TRUE) %>% 
+  clean_names() %>% 
+   select(
+     #geoid, 
+          name, 
+          "pop" = estimate,
+          geometry) %>% 
+  separate(col = name, c("county", "state"), sep = ", ") %>% 
+  mutate(county = str_remove_all(county, " County")) %>% 
+  mutate(county = str_remove_all(county, " Parish")) 
+```
+
+
 
 
 ```{r}

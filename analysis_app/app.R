@@ -19,6 +19,7 @@ library(bslib)
 
 end_date <- "Feb. 12, 2021"
 map_data <- read_rds("data_files/map_data2021-02-12.rds")
+county_map_data <- read_rds("data_files/county_map_data2021-02-12.rds")
 
 # Census API Key
 
@@ -31,6 +32,7 @@ options(scipen=999)
 # Load data
 
 geo <- read_rds("data_files/geo_data.rds")
+county_geo <- read_rds("data_files/county_geo_data.rds")
 theme2 <- theme(plot.title = element_blank(),
                 legend.title = element_blank(),
                 legend.position = "bottom",
@@ -90,21 +92,27 @@ ui <- fluidPage(
                         column(width = 3,
                                
                                br(),
+                               
+                               wellPanel(h4("Select Visualization Options Below:", 
+                                            style = "color:#0b2358", 
+                                            align = "left"), 
+                                         style = "background-color:white;"),
+                               
+                               br(),
                                br(),
                                
                                selectInput(inputId = "select_view",
                                            label = "",
                                            choices = c("Cases" = "cases",
                                                        "Deaths" = "deaths",
-                                                       "Hospitalizations" = "hosp",
+         #                                              "Hospitalizations" = "hosp",
                                                        "Vaccines Administered" = "vax"),
                                            multiple = FALSE,
                                            selected = "Cases"),
                                
                                br(),
                                br(),
-                               br(),
-                               
+
                                selectInput(inputId = "select_time",
                                            label = "",
                                            choices = c("Current Daily Level (7-Day Avg)" = "today",
@@ -115,8 +123,7 @@ ui <- fluidPage(
                                
                                br(),
                                br(),
-                               br(),
-                               
+
                                selectInput(inputId = "select_cut",
                                            label = "",
                                            choices = c("Per 100K People" = "pc",
@@ -125,17 +132,68 @@ ui <- fluidPage(
                                            selected = "Per 100K People")
                                ),
                         
-                   #     column(width = 2),
-                        
-                        
                         column(width = 9, 
-                               plotlyOutput("us_map", width = 1000, height = 600)
+                               plotlyOutput("state_map", width = 1000, height = 600)
                         )
                                
                                )
                ),
                
                tabPanel("County Level",
+                        
+                        fluidRow(
+                            
+                            
+                            column(width = 3,
+                                   
+                                   br(),
+                                   
+                                   wellPanel(h4("Select Visualization Options Below:", 
+                                                style = "color:#0b2358", 
+                                                align = "left"), 
+                                             style = "background-color:white;"),
+                                   
+                                   br(),
+                                   br(),
+                                   
+                                   selectInput(inputId = "select_view",
+                                               label = "",
+                                               choices = c("Cases" = "cases",
+                                                           "Deaths" = "deaths"),
+                                               multiple = FALSE,
+                                               selected = "Cases"),
+                                   
+                                   br(),
+                                   br(),
+                                   
+                                   selectInput(inputId = "select_time",
+                                               label = "",
+                                               choices = c("Current Daily Level (7-Day Avg)" = "today",
+                                                           "% Change Compared to 7 Days Ago" = "WoW",
+                                                           "Cumulative All-Time Total" = "cumulative"),
+                                               multiple = FALSE,
+                                               selected = "Current "),
+                                   
+                                   br(),
+                                   br(),
+                                   
+                                   selectInput(inputId = "select_cut",
+                                               label = "",
+                                               choices = c("Per 100K People" = "pc",
+                                                           "Raw Total" = "raw"),
+                                               multiple = FALSE,
+                                               selected = "Per 100K People")
+                            ),
+                            
+                            column(width = 9, 
+                                   plotlyOutput("county_map", width = 1000, height = 600)
+                            )
+                            
+                        )
+                        
+               ),
+               
+               tabPanel("Hospitalizations",
                         
                         fluidRow(
                             
@@ -169,7 +227,7 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
 
-    output$us_map <- renderPlotly ({
+    output$state_map <- renderPlotly ({
         
         # Require that an input is put in place
         
@@ -185,21 +243,16 @@ server <- function(input, output) {
             mapping <- geo %>% right_join(gem, by = "state")
             
             map1 <- ggplot(data = mapping, mapping = aes(fill = per_100K_number,
-                                     geometry = mapping$state_geometry,
+                                     geometry = state_geometry,
                                      text = paste(state, "<br>",
                                                   "Value:", viz_per_100K_number, "<br>"))) +
                 geom_sf(color = alpha("white", 1 / 2), size = 0.1) +
                 geom_sf(data = mapping, fill = NA, color = "white") +
-                scale_fill_viridis_c(option = "inferno", 
-                                     direction = -1) +
                 theme_void() +
                 theme2 +
                 style2
             
-            ggplotly(map1, tooltip = "text") %>% 
-                layout(legend = list(
-                    orientation = "h"
-                ))
+            ggplotly(map1, tooltip = "text")
             
         }
         
@@ -211,13 +264,11 @@ server <- function(input, output) {
              mapping <- geo %>% right_join(gem, by = "state")
              
              map2 <- ggplot(data = mapping, mapping = aes(fill = number,
-                                                          geometry = mapping$state_geometry,
+                                                          geometry = state_geometry,
                                                           text = paste(state, "<br>",
                                                                        "Value:", viz_number, "<br>"))) +
                  geom_sf(color = alpha("white", 1 / 2), size = 0.1) +
                  geom_sf(data = mapping, fill = NA, color = "white") +
-                 scale_fill_viridis_c(option = "inferno", 
-                                      direction = -1) +
                  theme_void() +
                  theme2 +
                  style2
@@ -228,10 +279,64 @@ server <- function(input, output) {
         
     })
     
-    output$background <- renderImage({
-        list(src = "coronavirus.jpg")
-    }, deleteFile = FALSE) 
-
+    
+    output$county_map <- renderPlotly ({
+        
+        # Require that an input is put in place
+        
+        req(input$select_view, 
+            input$select_time,
+            input$select_cut)
+        
+     #   if (input$select_cut == "pc") {
+            gem <- county_map_data %>% 
+                filter(slice1 == input$select_view & 
+                           slice2 == input$select_time)
+            
+            mapping <- county_geo %>% right_join(gem, by = c("state", "county"))
+            
+            map1 <- ggplot(data = mapping, mapping = aes(fill = per_100K_number,
+                                                         geometry = geometry)) +
+                # ,
+                #                                          text = paste(county, "<br>",
+                #                                                       state, "<br>",
+                #                                                       "Value:", viz_per_100K_number, "<br>"))) +
+                geom_sf(color = alpha("white", 1 / 2), size = 0.1) +
+            #    geom_sf(aes(geometry = state_geometry), fill = NA, color = "white") +
+                theme_void() +
+                theme2 +
+                style2
+            
+            ggplotly(map1
+              #       , tooltip = "text"
+                     )
+            
+      #  }
+        
+        # else {
+        #     gem <- county_map_data %>% 
+        #         filter(slice1 == input$select_view & 
+        #                    slice2 == input$select_time)
+        #     
+        #     mapping <- county_geo %>% right_join(gem, by = c("state", "county"))
+        #     
+        #     map2 <- ggplot(data = mapping, mapping = aes(fill = number,
+        #                                                  geometry = geometry,
+        #                                                  text = paste(county, "<br>",
+        #                                                               state, "<br>",
+        #                                                               "Value:", viz_number, "<br>"))) +
+        #         geom_sf(color = alpha("white", 1 / 2), size = 0.1) +
+        #         geom_sf(data = mapping, fill = NA, color = "white") +
+        #         theme_void() +
+        #         theme2 +
+        #         style2
+        #     
+        #     ggplotly(map2, tooltip = "text")
+        #     
+        # }
+        
+    }) 
+    
 }
 
 # Run the application 

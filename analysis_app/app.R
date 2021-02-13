@@ -3,7 +3,6 @@
 # Loading the necessary libraries
 
 library(shiny)
-library(tidyverse)
 library(readr)
 library(janitor)
 library(ggthemes)
@@ -14,6 +13,8 @@ library(shinyWidgets)
 library(tidycensus)
 library(plotly)
 library(bslib)
+library(tidyverse)
+library(ggplot2)
 
 # Set date
 
@@ -33,11 +34,14 @@ options(scipen=999)
 
 geo <- read_rds("data_files/geo_data.rds")
 county_geo <- read_rds("data_files/county_geo_data.rds")
+test <- read_rds("data_files/test.rds")
+
+
 theme2 <- theme(plot.title = element_blank(),
                 legend.title = element_blank(),
-                legend.position = "bottom",
+                legend.position = "right",
                 legend.key.width = unit(0.5, "cm"),
-                legend.direction = "horizontal",
+            #    legend.direction = "horizontal",
                 legend.text = element_text(color = "white", size = 12, face = "bold"),
                 panel.grid.major = element_blank(), 
                 panel.grid.minor = element_blank(),
@@ -45,6 +49,8 @@ theme2 <- theme(plot.title = element_blank(),
                 plot.background = element_rect(fill = "transparent", colour = NA))
 
 style2 <- scale_fill_gradientn(name = "", colors = c("#dde6fb", "#0b2358"))
+
+style3 <- scale_fill_gradientn(name = "", trans = "log", colors = c("#dde6fb", "#0b2358"))
 
 
 # Images for use later
@@ -105,7 +111,6 @@ ui <- fluidPage(
                                            label = "",
                                            choices = c("Cases" = "cases",
                                                        "Deaths" = "deaths",
-         #                                              "Hospitalizations" = "hosp",
                                                        "Vaccines Administered" = "vax"),
                                            multiple = FALSE,
                                            selected = "Cases"),
@@ -119,7 +124,7 @@ ui <- fluidPage(
                                                        "% Change Compared to 7 Days Ago" = "WoW",
                                                        "Cumulative All-Time Total" = "cumulative"),
                                            multiple = FALSE,
-                                           selected = "Current "),
+                                           selected = "Current Daily Level (7-Day Avg)"),
                                
                                br(),
                                br(),
@@ -156,7 +161,7 @@ ui <- fluidPage(
                                    br(),
                                    br(),
                                    
-                                   selectInput(inputId = "select_view",
+                                   selectInput(inputId = "select_view2",
                                                label = "",
                                                choices = c("Cases" = "cases",
                                                            "Deaths" = "deaths"),
@@ -166,18 +171,18 @@ ui <- fluidPage(
                                    br(),
                                    br(),
                                    
-                                   selectInput(inputId = "select_time",
+                                   selectInput(inputId = "select_time2",
                                                label = "",
                                                choices = c("Current Daily Level (7-Day Avg)" = "today",
                                                            "% Change Compared to 7 Days Ago" = "WoW",
                                                            "Cumulative All-Time Total" = "cumulative"),
                                                multiple = FALSE,
-                                               selected = "Current "),
+                                               selected = "Current Daily Level (7-Day Avg)"),
                                    
                                    br(),
                                    br(),
                                    
-                                   selectInput(inputId = "select_cut",
+                                   selectInput(inputId = "select_cut2",
                                                label = "",
                                                choices = c("Per 100K People" = "pc",
                                                            "Raw Total" = "raw"),
@@ -186,7 +191,7 @@ ui <- fluidPage(
                             ),
                             
                             column(width = 9, 
-                                   plotlyOutput("county_map", width = 1000, height = 600)
+                                   plotOutput("county_map", width = 1000, height = 600)
                             )
                             
                         )
@@ -228,21 +233,21 @@ ui <- fluidPage(
 server <- function(input, output) {
 
     output$state_map <- renderPlotly ({
-        
+
         # Require that an input is put in place
-        
-        req(input$select_view, 
+
+        req(input$select_view,
             input$select_time,
             input$select_cut)
-        
+
         if (input$select_cut == "pc") {
-            gem <- map_data %>% 
-                filter(slice1 == input$select_view & 
+            gem <- map_data %>%
+                filter(slice1 == input$select_view &
                            slice2 == input$select_time)
-            
+
             mapping <- geo %>% right_join(gem, by = "state")
-            
-            map1 <- ggplot(data = mapping, mapping = aes(fill = per_100K_number,
+
+            map1 <- ggplot(data = mapping, aes(fill = per_100K_number,
                                      geometry = state_geometry,
                                      text = paste(state, "<br>",
                                                   "Value:", viz_per_100K_number, "<br>"))) +
@@ -251,19 +256,19 @@ server <- function(input, output) {
                 theme_void() +
                 theme2 +
                 style2
-            
+
             ggplotly(map1, tooltip = "text")
-            
+
         }
-        
+
          else {
-             gem <- map_data %>% 
-                 filter(slice1 == input$select_view & 
+             gem <- map_data %>%
+                 filter(slice1 == input$select_view &
                             slice2 == input$select_time)
-             
+
              mapping <- geo %>% right_join(gem, by = "state")
-             
-             map2 <- ggplot(data = mapping, mapping = aes(fill = number,
+
+             map2 <- ggplot(data = mapping, aes(fill = number,
                                                           geometry = state_geometry,
                                                           text = paste(state, "<br>",
                                                                        "Value:", viz_number, "<br>"))) +
@@ -272,48 +277,60 @@ server <- function(input, output) {
                  theme_void() +
                  theme2 +
                  style2
-             
+
              ggplotly(map2, tooltip = "text")
-             
+
          }
-        
+
     })
     
     
-    output$county_map <- renderPlotly ({
+    output$county_map <- renderPlot ({
         
         # Require that an input is put in place
         
-        req(input$select_view, 
-            input$select_time,
-            input$select_cut)
-        
-     #   if (input$select_cut == "pc") {
-            gem <- county_map_data %>% 
-                filter(slice1 == input$select_view & 
-                           slice2 == input$select_time)
-            
+        req(input$select_view2,
+            input$select_time2,
+            input$select_cut2)
+
+        if (input$select_cut2 == "pc") {
+            gem <- county_map_data %>%
+                filter(slice1 == input$select_view2 &
+                           slice2 == input$select_time2)
+
             mapping <- county_geo %>% right_join(gem, by = c("state", "county"))
             
-            map1 <- ggplot(data = mapping, mapping = aes(fill = per_100K_number,
-                                                         geometry = geometry)) +
-                # ,
-                #                                          text = paste(county, "<br>",
-                #                                                       state, "<br>",
-                #                                                       "Value:", viz_per_100K_number, "<br>"))) +
-                geom_sf(color = alpha("white", 1 / 2), size = 0.1) +
-            #    geom_sf(aes(geometry = state_geometry), fill = NA, color = "white") +
-                theme_void() +
-                theme2 +
-                style2
-            
-            ggplotly(map1
-              #       , tooltip = "text"
-                     )
-            
-      #  }
+            map3 <- ggplot() +
+               geom_sf(data = mapping, aes(fill = per_100K_number,
+                                                         geometry = geometry), color = alpha("white", 1 / 2), size = 0.1) +
+               geom_sf(data = geo, aes(geometry = state_geometry), fill = NA, color = "white") +
+               theme_void() +
+               theme2 +
+               style2
         
-        # else {
+            map3
+            
+         }
+
+         else {
+             gem <- county_map_data %>%
+                 filter(slice1 == input$select_view2 &
+                            slice2 == input$select_time2)
+             
+             mapping <- county_geo %>% right_join(gem, by = c("state", "county"))
+             
+             map3 <- ggplot() +
+                 geom_sf(data = mapping, aes(fill = number,
+                                             geometry = geometry), color = alpha("white", 1 / 2), size = 0.1) +
+                 geom_sf(data = geo, aes(geometry = state_geometry), fill = NA, color = "white") +
+                 theme_void() +
+                 theme2 +
+                 style2
+             
+             map3
+         }
+        
+        
         #     gem <- county_map_data %>% 
         #         filter(slice1 == input$select_view & 
         #                    slice2 == input$select_time)
@@ -335,7 +352,7 @@ server <- function(input, output) {
         #     
         # }
         
-    }) 
+    }, bg="transparent") 
     
 }
 

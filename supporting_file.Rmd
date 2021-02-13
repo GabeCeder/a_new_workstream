@@ -271,11 +271,18 @@ hh <- gg %>%
   mutate(viz_number = case_when(slice2 == "WoW" & number > 0 ~ paste("+", viz_number, sep = ""),
                                 slice2 != "WoW" | number <= 0 ~ viz_number),
          viz_per_100K_number = case_when(slice2 == "WoW" & per_100K_number > 0 ~ paste("+", viz_per_100K_number, sep = ""),
-                                         slice2 != "Wow" | per_100K_number <= 0 ~ viz_per_100K_number))
+                                         slice2 != "Wow" | per_100K_number <= 0 ~ viz_per_100K_number)) %>% 
+    filter(!is.infinite(number))
+
 ```
 
 
 ```{r}
+hh
+hh %>% 
+  filter(!is.infinite(number))
+  mutate(number = case_when(number == "Inf" ~ "8",
+                            number != "Inf" ~ number))
 saveRDS(hh, file = paste("analysis_app/data_files/county_map_data", end_date, ".rds", sep = ""))
 
 ```
@@ -297,6 +304,45 @@ both
 
 ```{r}
 
+hh
+test <- hh %>% 
+                filter(slice1 == "cases" & 
+                           slice2 == "today")
+            
+mapping <- county_pop %>% right_join(test, by = c("state", "county"))
+
+ggplot(data = mapping, mapping = aes(fill = per_100K_number,
+                                                         geometry = geometry)) +
+                # ,
+                #                                          text = paste(county, "<br>",
+                #                                                       state, "<br>",
+                #                                                       "Value:", viz_per_100K_number, "<br>"))) +
+                geom_sf(color = alpha("white", 1 / 2), size = 0.1) +
+            #    geom_sf(aes(geometry = state_geometry), fill = NA, color = "white") +
+                theme_void() +
+                theme2 
+```
+
+
+```{r}
+hh
+jj <- county_pop %>% 
+  right_join(hh, by = c("state", "county"))
+jj
+saveRDS(jj, file = "analysis_app/data_files/test.rds")
+jj
+a
+a <- jj %>% 
+  filter(slice1 == "cases" &
+                           slice2 == "cumulative") %>% 
+                ggplot() +
+                geom_sf(aes(fill = number, geometry = geometry))
+hh
+ggplotly(a)
+```
+
+
+```{r}
 test <- hh %>% 
                 filter(slice1 == "cases" & 
                            slice2 == "cumulative")
@@ -317,6 +363,15 @@ ggplot() +
                 theme_void() +
                 theme2
             #    style2
+```
+```{r}
+hhs_icu_occupancy <- "~/Desktop/Projects/basic_operations/data/estimated_icu_20210208_1835.csv"
+
+hhs_hosp_level <- "~/Desktop/Projects/basic_operations/data/reported_hospital_capacity_admissions_facility_level_weekly_average_timeseries_20210207.csv"
+
+
+
+
 ```
 
 

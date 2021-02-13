@@ -14,13 +14,18 @@ library(tidycensus)
 library(plotly)
 library(bslib)
 library(tidyverse)
-library(ggplot2)
 
 # Set date
 
 end_date <- "Feb. 12, 2021"
-map_data <- read_rds("data_files/map_data2021-02-12.rds")
-county_map_data <- read_rds("data_files/county_map_data2021-02-12.rds")
+
+# Load data
+
+map_data <- read_rds("data_files/map_data2021-02-13.rds")
+county_map_data <- read_rds("data_files/county_map_data2021-02-13.rds")
+
+geo <- read_rds("data_files/geo_data.rds")
+county_geo <- read_rds("data_files/county_geo_data.rds")
 
 # Census API Key
 
@@ -28,19 +33,13 @@ Sys.getenv("CENSUS_API_KEY")
 
 # Turn off scientific notation
 
-options(scipen=999)
-
-# Load data
-
-geo <- read_rds("data_files/geo_data.rds")
-county_geo <- read_rds("data_files/county_geo_data.rds")
-test <- read_rds("data_files/test.rds")
-
+options(scipen = 999)
 
 theme2 <- theme(plot.title = element_blank(),
                 legend.title = element_blank(),
                 legend.position = "right",
-                legend.key.width = unit(0.5, "cm"),
+                legend.key.width = unit(0.8, "cm"),
+                legend.key.height = unit(1.5, "cm"),
             #    legend.direction = "horizontal",
                 legend.text = element_text(color = "white", size = 12, face = "bold"),
                 panel.grid.major = element_blank(), 
@@ -50,16 +49,14 @@ theme2 <- theme(plot.title = element_blank(),
 
 style2 <- scale_fill_gradientn(name = "", colors = c("#dde6fb", "#0b2358"))
 
-style3 <- scale_fill_gradientn(name = "", trans = "log", colors = c("#dde6fb", "#0b2358"))
-
 
 # Images for use later
 #                        https://phil.cdc.gov//PHIL_Images/23354/23354_lores.jpg
 # https://techcrunch.com/wp-content/uploads/2020/03/GettyImages-1209679043.jpg
 
 
- # bs_theme(version = 4, bootswatch = "minty") %>%
- #     bs_theme_preview()
+  # bs_theme(version = 4, bootswatch = "minty") %>%
+  #     bs_theme_preview()
 
 # Define UI for the application
 
@@ -67,14 +64,12 @@ ui <- fluidPage(
     
     # Set background image to an image of COVID-19  
     
-    setBackgroundImage(src = 
-                           #"https://drive.google.com/file/d/1HFhzmUurOMS0t5iaym9EFEHZ7KgDXdVu/view"),
-                      #         plotOutput("background"))),
-                           "coronavirus3.jpg"),
+    setBackgroundImage(src = "coronavirus3.jpg"),
                  #      https://heller.brandeis.edu/lurie/images/stock-images/coronavirus.jpg
     
-    theme = bs_theme(version = 4, bootswatch = "minty"),
-        #shinytheme("superhero"),
+    theme = bs_theme(version = 4, bootswatch = "minty"
+                 #    ,bg = "#fff", fg = "#0b2358"
+                     ),
     
     # Add title
     
@@ -202,7 +197,13 @@ ui <- fluidPage(
                         
                         fluidRow(
                             
-                            column(width = 10)
+                            column(width = 6,
+                                   selectInput(inputId = "select_view3",
+                                              label = "",
+                                              choices = c("Cases" = "today_cases_7day_avg"),
+                                              multiple = FALSE,
+                                              selected = "Cases")),
+                            wellPanel(plotlyOutput("county_test"))
                         )
                ),
                
@@ -298,7 +299,7 @@ server <- function(input, output) {
                 filter(slice1 == input$select_view2 &
                            slice2 == input$select_time2)
 
-            mapping <- county_geo %>% right_join(gem, by = c("state", "county"))
+            mapping <- county_geo %>% right_join(gem, by = "fips")
             
             map3 <- ggplot() +
                geom_sf(data = mapping, aes(fill = per_100K_number,
@@ -317,7 +318,7 @@ server <- function(input, output) {
                  filter(slice1 == input$select_view2 &
                             slice2 == input$select_time2)
              
-             mapping <- county_geo %>% right_join(gem, by = c("state", "county"))
+             mapping <- county_geo %>% right_join(gem, by = "fips")
              
              map3 <- ggplot() +
                  geom_sf(data = mapping, aes(fill = number,
@@ -330,29 +331,35 @@ server <- function(input, output) {
              map3
          }
         
-        
-        #     gem <- county_map_data %>% 
-        #         filter(slice1 == input$select_view & 
-        #                    slice2 == input$select_time)
-        #     
-        #     mapping <- county_geo %>% right_join(gem, by = c("state", "county"))
-        #     
-        #     map2 <- ggplot(data = mapping, mapping = aes(fill = number,
-        #                                                  geometry = geometry,
-        #                                                  text = paste(county, "<br>",
-        #                                                               state, "<br>",
-        #                                                               "Value:", viz_number, "<br>"))) +
-        #         geom_sf(color = alpha("white", 1 / 2), size = 0.1) +
-        #         geom_sf(data = mapping, fill = NA, color = "white") +
-        #         theme_void() +
-        #         theme2 +
-        #         style2
-        #     
-        #     ggplotly(map2, tooltip = "text")
-        #     
-        # }
-        
     }, bg="transparent") 
+    
+    
+    output$bottom_chart <- renderPlotly ({
+        
+        req(input$select_view)
+        
+        aa <- test_data %>% 
+            filter(view == input$select_view3)
+        
+        bb <- test %>% 
+            right_join(aa, by = "fips")
+        
+        a <- bb %>% ggplot(aes(fill = number, geometry = geometry
+                               # ,
+                               # text = paste("County:", county.x, "<br>",
+                               #              "State:", state.x, "<br>",
+                               #              "Number:", number, "<br>"
+                              )) +
+            geom_sf(data = bb) +
+            scale_fill_viridis_c(option = "plasma") +
+            labs(caption = "Sources: The New York Times and the American Community Survey 2014-2018",
+                 fill = "Total Cases") +
+            theme_void()
+        
+        ggplotly(a)        
+        
+    })
+    
     
 }
 

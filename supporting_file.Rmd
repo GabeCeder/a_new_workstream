@@ -38,12 +38,9 @@ options(tigris_use_cache = TRUE)
 ```
 
 ```{r}
+# Change data save date
+
 end_date <- "2021-02-12"
-theme2 <- theme(plot.title = element_blank(),
-        legend.title = element_blank(),
-        legend.text = element_blank(),
-        legend.position = "right",
-        legend.key.width = unit(0.5, "cm"))
 ```
 
 ```{r}
@@ -56,7 +53,7 @@ county_pop <- get_acs(geography = "county",
                   shift_geo = TRUE) %>% 
   clean_names() %>% 
    select(
-     #geoid, 
+          "fips" = geoid, 
           name, 
           "pop" = estimate,
           geometry) %>% 
@@ -65,11 +62,12 @@ county_pop <- get_acs(geography = "county",
   mutate(county = str_remove_all(county, " Parish")) 
 
 county_pop_num <- county_pop %>% 
-  select(state, county, pop)
+  select(fips, state, county, pop)
 ```
 
 
 ```{r}
+
 # Case and death data
 
 state_text <- getURL("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv")
@@ -108,9 +106,7 @@ state_pop <- get_acs(geography = "state",
         #  "pop" = estimate,
           "state_geometry" = geometry)  
 
-
 # State abbreviations
-
 # c <- read_excel("data/state_abbreviations.xlsx")
 
 # Vaccines data
@@ -118,13 +114,11 @@ state_pop <- get_acs(geography = "state",
 vaccines_text <- getURL("https://raw.githubusercontent.com/youyanggu/covid19-cdc-vaccination-data/main/aggregated_adjusted.csv")
 vaccines <- read_csv(vaccines_text) %>% 
   clean_names() %>% 
-  select(date, 
+  select(date,
          "pop" = census2019,
          "state" = long_name,
          "cumulative_doses_administered" = doses_administered,
-         "today_seven_day_avg_doses_adm" = doses_administered_daily_7day_avg,
-     #    "daily_doses_administered" = doses_distributed_daily
-         ) %>% 
+         "today_seven_day_avg_doses_adm" = doses_administered_daily_7day_avg) %>% 
   filter(!(state %in% c("American Samoa",
                         "Bureau of Prisons",
                         "Dept of Defense",
@@ -145,6 +139,8 @@ vaccines <- read_csv(vaccines_text) %>%
   slice_max(order_by = date, n = 1) %>% 
   mutate(state = case_when(state == "New York State" ~ "New York",
                            state != "New York State" ~ state))
+
+# Create population dataset
 
 pop <- vaccines %>% 
   select(state, pop)
@@ -190,20 +186,10 @@ d <- c %>%
                                 slice2 != "WoW" | number <= 0 ~ viz_number),
          viz_per_100K_number = case_when(slice2 == "WoW" & per_100K_number > 0 ~ paste("+", viz_per_100K_number, sep = ""),
                                          slice2 != "Wow" | per_100K_number <= 0 ~ viz_per_100K_number))
-
-d
-
-```
-```{r}
-#b <- state_pop %>% 
-#  right_join(a, by = c("state_name" = "state"))
-
 ```
 
 ```{r}
-
 saveRDS(d, file = paste("analysis_app/data_files/map_data", end_date, ".rds", sep = ""))
-
 ```
 
 ```{r}
@@ -230,17 +216,19 @@ ff <- county %>%
   mutate(deaths_7day_avg =  rollapply(new_deaths, 7, mean, fill = NA, align = 'right')) %>% 
   mutate(delta_deaths_WoW = 100 * (0 - (1 - (deaths_7day_avg / lag(deaths_7day_avg, 7, default = 0, order_by = date))))) %>% 
   slice_max(order_by = date, n = 1) %>% 
-  select(state, 
+  select(fips,
+         state, 
+         county,
          "today_cases_7day_avg" = cases_7day_avg,
          delta_cases_WoW,
          "cumulative_cases" = cases,
          "today_deaths_7day_avg" = deaths_7day_avg,
          delta_deaths_WoW,
          "cumulative_deaths" = deaths) %>% 
-  pivot_longer(!c(state,county), names_to = "view", values_to = "number")
+  pivot_longer(!c(fips,state,county), names_to = "view", values_to = "number")
   
 gg <- ff %>% 
-  left_join(county_pop_num, by = c("state", "county")) %>% 
+  left_join(county_pop_num, by = "fips") %>% 
   mutate(per_100K_number = case_when(view %in% c("delta_doses_WoW",
                                                "delta_cases_WoW",
                                                "delta_deaths_WoW") ~ number, 
@@ -271,99 +259,123 @@ hh <- gg %>%
   mutate(viz_number = case_when(slice2 == "WoW" & number > 0 ~ paste("+", viz_number, sep = ""),
                                 slice2 != "WoW" | number <= 0 ~ viz_number),
          viz_per_100K_number = case_when(slice2 == "WoW" & per_100K_number > 0 ~ paste("+", viz_per_100K_number, sep = ""),
-                                         slice2 != "Wow" | per_100K_number <= 0 ~ viz_per_100K_number)) %>% 
-    filter(!is.infinite(number))
+                                         slice2 != "Wow" | per_100K_number <= 0 ~ viz_per_100K_number))
 
 ```
 
-
 ```{r}
-hh
-hh %>% 
-  filter(!is.infinite(number))
-  mutate(number = case_when(number == "Inf" ~ "8",
-                            number != "Inf" ~ number))
 saveRDS(hh, file = paste("analysis_app/data_files/county_map_data", end_date, ".rds", sep = ""))
+```
+
+```{r}
+ saveRDS(county_pop, file = "analysis_app/data_files/county_geo_data.rds")
+```
+
+```{r}
+state2 <- read_csv(state_text) %>% 
+  group_by(date) %>% 
+  summarize(cases = sum(cases),
+            deaths = sum(deaths)) %>% 
+  mutate(new_cases = cases - lag(cases, k = 1)) %>% 
+  mutate(new_cases = case_when(new_cases < 0 ~ 0,
+                               new_cases >= 0 ~ new_cases)) %>% 
+  mutate(cases_7day_avg =  rollapply(new_cases, 7, mean, fill = NA, align = 'right')) %>% 
+  mutate(new_deaths = deaths - lag(deaths, k = 1)) %>% 
+  mutate(new_deaths = case_when(new_deaths < 0 ~ 0,
+                               new_deaths >= 0 ~ new_deaths)) %>% 
+  mutate(deaths_7day_avg =  rollapply(new_deaths, 7, mean, fill = NA, align = 'right')) %>% 
+  select(date,
+         new_cases,
+         new_deaths,
+         "today_cases_7day_avg" = cases_7day_avg,
+         "today_deaths_7day_avg" = deaths_7day_avg)
+
+part1 <- state2 %>% 
+    pivot_longer(!c(date), names_to = "view", values_to = "number") %>% 
+    mutate(slice1 = case_when(grepl("cases", view) ~ "cases",
+                              grepl("deaths", view) ~ "deaths")) %>% 
+  filter(view != "today_cases_7day_avg" & view != "today_deaths_7day_avg") %>% 
+  select(date, slice1, "daily" = view, "daily_number" = number)
+
+part2 <- state2 %>% 
+    pivot_longer(!c(date), names_to = "view", values_to = "number") %>% 
+    mutate(slice1 = case_when(grepl("cases", view) ~ "cases",
+                              grepl("deaths", view) ~ "deaths")) %>% 
+  filter(view != "new_cases" & view != "new_deaths") %>% 
+  select(date, slice1, "avg" = view, "avg_number" = number)
+
+aa <- part1 %>% 
+  left_join(part2, by = c("date", "slice1"))
+
+
+aa 
+
+avg_daily_stat <- aa %>% 
+  slice_max(order_by = date) %>% 
+  filter(slice1 == "cases") %>% 
+  pull(avg_number) %>% 
+  round(0)
+
+avg_daily_stat <- comma(avg_daily_stat)
+
+aa %>% filter(slice1 == "cases") %>% 
+  ggplot() +
+    geom_line(aes(x = date, y = avg_number / 1000)) +
+    geom_col(aes(x = date, y = daily_number / 1000), alpha = 0.4) +
+    scale_x_date(date_labels = "%B", 
+               date_breaks = "months", 
+               name = "") +
+    labs(y = "pasteDailyinput$select_view (thousands)",
+         title = paste("In the past week, the United States averaged ", avg_daily_stat, " cases per day.", sep = ""))
 
 ```
 
 ```{r}
-saveRDS(county_pop, file = "analysis_app/data_files/county_geo_data.rds")
-```
-
-```{r}
-county_pop
-state_pop
-
-both <- county_pop %>% 
-  st_join(state_pop, by = "state")
-
-both
-```
+vaccines2 <- vaccines %>% 
+  select(-pop) %>% 
+  
 
 
-```{r}
+b <- a %>% select(-date.x, -date.y) %>% pivot_longer(!state, names_to = "view", values_to = "number")
 
-hh
-test <- hh %>% 
-                filter(slice1 == "cases" & 
-                           slice2 == "today")
-            
-mapping <- county_pop %>% right_join(test, by = c("state", "county"))
+c <- b %>% 
+  left_join(pop, by = "state") %>% 
+  mutate(per_100K_number = case_when(view %in% c("delta_doses_WoW",
+                                               "delta_cases_WoW",
+                                               "delta_deaths_WoW") ~ number, 
+                                     !(view %in% c("delta_doses_WoW",
+                                               "delta_cases_WoW",
+                                               "delta_deaths_WoW")) ~ number / pop * 100000)) %>% 
+  select(-pop)
 
-ggplot(data = mapping, mapping = aes(fill = per_100K_number,
-                                                         geometry = geometry)) +
-                # ,
-                #                                          text = paste(county, "<br>",
-                #                                                       state, "<br>",
-                #                                                       "Value:", viz_per_100K_number, "<br>"))) +
-                geom_sf(color = alpha("white", 1 / 2), size = 0.1) +
-            #    geom_sf(aes(geometry = state_geometry), fill = NA, color = "white") +
-                theme_void() +
-                theme2 
-```
+c$number <- round(c$number, 2)
+c$per_100K_number <- round(c$per_100K_number, 2)
 
-
-```{r}
-hh
-jj <- county_pop %>% 
-  right_join(hh, by = c("state", "county"))
-jj
-saveRDS(jj, file = "analysis_app/data_files/test.rds")
-jj
-a
-a <- jj %>% 
-  filter(slice1 == "cases" &
-                           slice2 == "cumulative") %>% 
-                ggplot() +
-                geom_sf(aes(fill = number, geometry = geometry))
-hh
-ggplotly(a)
+d <- c %>% 
+  mutate(slice1 = case_when(grepl("doses", view) ~ "vax",
+                           grepl("cases", view) ~ "cases",
+                           grepl("deaths", view) ~ "deaths",
+                           grepl("hosp", view) ~ "hosp")) %>% 
+  mutate(slice2 = case_when(grepl("today", view) ~ "today",
+                            grepl("WoW", view) ~ "WoW",
+                            grepl("cumulative", view) ~ "cumulative")) %>% 
+  mutate(viz_number = comma(number),
+         viz_per_100K_number = comma(per_100K_number)) %>% 
+  separate(viz_number, c("viz_number"), "\\.") %>% 
+  separate(viz_per_100K_number, c("viz_per_100K_number"), "\\.") %>% 
+  mutate(viz_number = case_when(slice2 == "WoW" ~ paste(viz_number, "%", sep = ""),
+                            slice2 != "WoW" ~ viz_number),
+         viz_per_100K_number = case_when((slice2 == "WoW" ~ paste(viz_per_100K_number, "%", sep = "")),
+                                          slice2 != "WoW" ~ viz_per_100K_number)) %>% 
+  mutate(viz_number = case_when(slice2 == "WoW" & number > 0 ~ paste("+", viz_number, sep = ""),
+                                slice2 != "WoW" | number <= 0 ~ viz_number),
+         viz_per_100K_number = case_when(slice2 == "WoW" & per_100K_number > 0 ~ paste("+", viz_per_100K_number, sep = ""),
+                                         slice2 != "Wow" | per_100K_number <= 0 ~ viz_per_100K_number))
 ```
 
 
-```{r}
-test <- hh %>% 
-                filter(slice1 == "cases" & 
-                           slice2 == "cumulative")
-            
-            mapping <- county_pop %>% right_join(test, by = c("state", "county"))
-            
-ggplot() + 
-  # ,
-  #                                                        text = paste(county, "<br>",
-  #                                                                     state, "<br>",
-  #                                                                     "Value:", viz_per_100K_number, "<br>"))) +
-                 geom_sf(data = mapping, mapping = aes(fill = per_100K_number,
-                                                         geometry = geometry, 
-                                                       text = paste(county, "<br>",
-                                                                       state, "<br>",
-                                                                       "Value:", viz_per_100K_number, "<br>")), color = alpha("white", 1 / 2), size = 0.1) +
-                geom_sf(data = state_pop, aes(geometry = state_geometry), fill = NA, color = "white") +
-                theme_void() +
-                theme2
-            #    style2
-```
+
+
 ```{r}
 hhs_icu_occupancy <- "~/Desktop/Projects/basic_operations/data/estimated_icu_20210208_1835.csv"
 
@@ -372,31 +384,4 @@ hhs_hosp_level <- "~/Desktop/Projects/basic_operations/data/reported_hospital_ca
 
 
 
-```
-
-
-```{r}
-county_pop <- get_acs(geography = "county",
-                  variables = c(pop = "B01003_001"), 
-                  year = 2018,
-                  geometry = TRUE, 
-                  shift_geo = TRUE) %>% 
-  clean_names() %>% 
-   select(
-     #geoid, 
-          name, 
-          "pop" = estimate,
-          geometry) %>% 
-  separate(col = name, c("county", "state"), sep = ", ") %>% 
-  mutate(county = str_remove_all(county, " County")) %>% 
-  mutate(county = str_remove_all(county, " Parish")) 
-```
-
-
-
-
-```{r}
-vaccines %>% 
-  summarize(totalpop = sum(pop),
-            totaldoses = sum(total_doses_administered))
 ```

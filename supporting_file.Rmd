@@ -271,6 +271,27 @@ saveRDS(hh, file = paste("analysis_app/data_files/county_map_data", end_date, ".
  saveRDS(county_pop, file = "analysis_app/data_files/county_geo_data.rds")
 ```
 
+
+
+
+```{r}
+theme3 <- theme(plot.title = element_text(color = "white"),
+                panel.grid.major = element_blank(), 
+                panel.grid.minor = element_blank(),
+                panel.background = element_rect(fill = "transparent", colour = NA),
+                plot.background = element_rect(fill = "black", colour = NA),
+                panel.grid.major.y = element_line(size = 0.5, linetype = 'solid',
+                                colour = "gray20"),
+        axis.title.y = element_text(color = "white", size = 12),
+        axis.title.y.right = element_text(color = "white", size = 12),
+        axis.text.y = element_text(color = "white"),
+        axis.text.y.right = element_text(color = "white"),
+        axis.text.x = element_text(color = "white"),
+        axis.ticks.x = element_line(color = "white"),
+        axis.text=element_text(size = 10))
+```
+
+
 ```{r}
 state2 <- read_csv(state_text) %>% 
   group_by(date) %>% 
@@ -307,9 +328,6 @@ part2 <- state2 %>%
 aa <- part1 %>% 
   left_join(part2, by = c("date", "slice1"))
 
-
-aa 
-
 avg_daily_stat <- aa %>% 
   slice_max(order_by = date) %>% 
   filter(slice1 == "cases") %>% 
@@ -320,59 +338,63 @@ avg_daily_stat <- comma(avg_daily_stat)
 
 aa %>% filter(slice1 == "cases") %>% 
   ggplot() +
-    geom_line(aes(x = date, y = avg_number / 1000)) +
-    geom_col(aes(x = date, y = daily_number / 1000), alpha = 0.4) +
+    geom_line(aes(x = date, y = avg_number / 1000), color = "white") +
+    geom_col(aes(x = date, y = daily_number / 1000), color = NA, fill = "white", alpha = 0.4) +
     scale_x_date(date_labels = "%B", 
                date_breaks = "months", 
                name = "") +
     labs(y = "pasteDailyinput$select_view (thousands)",
-         title = paste("In the past week, the United States averaged ", avg_daily_stat, " cases per day.", sep = ""))
+         title = paste("In the past week, the United States averaged ", avg_daily_stat, " cases per day.", sep = "")) +
+  theme3
 
 ```
 
 ```{r}
-vaccines2 <- vaccines %>% 
-  select(-pop) %>% 
-  
+# save case and death data
 
+saveRDS(aa, file = paste("analysis_app/data_files/case_chart_data", end_date, ".rds", sep = ""))
 
-b <- a %>% select(-date.x, -date.y) %>% pivot_longer(!state, names_to = "view", values_to = "number")
-
-c <- b %>% 
-  left_join(pop, by = "state") %>% 
-  mutate(per_100K_number = case_when(view %in% c("delta_doses_WoW",
-                                               "delta_cases_WoW",
-                                               "delta_deaths_WoW") ~ number, 
-                                     !(view %in% c("delta_doses_WoW",
-                                               "delta_cases_WoW",
-                                               "delta_deaths_WoW")) ~ number / pop * 100000)) %>% 
-  select(-pop)
-
-c$number <- round(c$number, 2)
-c$per_100K_number <- round(c$per_100K_number, 2)
-
-d <- c %>% 
-  mutate(slice1 = case_when(grepl("doses", view) ~ "vax",
-                           grepl("cases", view) ~ "cases",
-                           grepl("deaths", view) ~ "deaths",
-                           grepl("hosp", view) ~ "hosp")) %>% 
-  mutate(slice2 = case_when(grepl("today", view) ~ "today",
-                            grepl("WoW", view) ~ "WoW",
-                            grepl("cumulative", view) ~ "cumulative")) %>% 
-  mutate(viz_number = comma(number),
-         viz_per_100K_number = comma(per_100K_number)) %>% 
-  separate(viz_number, c("viz_number"), "\\.") %>% 
-  separate(viz_per_100K_number, c("viz_per_100K_number"), "\\.") %>% 
-  mutate(viz_number = case_when(slice2 == "WoW" ~ paste(viz_number, "%", sep = ""),
-                            slice2 != "WoW" ~ viz_number),
-         viz_per_100K_number = case_when((slice2 == "WoW" ~ paste(viz_per_100K_number, "%", sep = "")),
-                                          slice2 != "WoW" ~ viz_per_100K_number)) %>% 
-  mutate(viz_number = case_when(slice2 == "WoW" & number > 0 ~ paste("+", viz_number, sep = ""),
-                                slice2 != "WoW" | number <= 0 ~ viz_number),
-         viz_per_100K_number = case_when(slice2 == "WoW" & per_100K_number > 0 ~ paste("+", viz_per_100K_number, sep = ""),
-                                         slice2 != "Wow" | per_100K_number <= 0 ~ viz_per_100K_number))
 ```
 
+
+```{r}
+vaccines2 <- read_csv(vaccines_text) %>% 
+  clean_names() %>% 
+  select(date,
+         "state" = long_name,
+         "new_doses" = doses_distributed_daily,
+        # "cumulative_doses_administered" = doses_administered,
+         "today_seven_day_avg_doses_adm" = doses_administered_daily_7day_avg) %>% 
+  filter(!(state %in% c("Bureau of Prisons",
+                        "Dept of Defense",
+                        "Indian Health Svc",
+                        "Long Term Care",
+                        "Veterans Health",
+                        "United States"))) %>% 
+  group_by(date) %>% 
+  summarize(new_doses = sum(new_doses),
+            today_seven_day_avg_doses_adm = sum(today_seven_day_avg_doses_adm)) %>% 
+  mutate(slice1 = "vax")
+  
+vaccines2 %>% filter(slice1 == "vax") %>% 
+  ggplot() +
+    geom_line(aes(x = date, y = today_seven_day_avg_doses_adm / 1000), color = "white") +
+    geom_col(aes(x = date, y = new_doses / 1000), fill = "white", color = "white", alpha = 0.4) +
+    # scale_x_date(date_labels = "%B", 
+    #            date_breaks = "months", 
+    #            name = "") +
+    labs(x = "", y = "pasteDailyinput$select_view (thousands)",
+         title = paste("In the past week, the United States averaged ", avg_daily_stat, " vaccinations per day.", sep = "")) +
+    theme3
+```
+
+```{r}
+
+# save vaccination data for chart
+
+saveRDS(vaccines2, file = paste("analysis_app/data_files/vax_chart_data", end_date, ".rds", sep = ""))
+
+```
 
 
 

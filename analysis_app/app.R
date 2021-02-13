@@ -47,6 +47,21 @@ theme2 <- theme(plot.title = element_blank(),
                 panel.background = element_rect(fill = "transparent", colour = NA),
                 plot.background = element_rect(fill = "transparent", colour = NA))
 
+theme3 <- theme(plot.title = element_text(color = "white"),
+                panel.grid.major = element_blank(), 
+                panel.grid.minor = element_blank(),
+                panel.background = element_rect(fill = "transparent", colour = NA),
+                plot.background = element_rect(fill = "black", colour = NA),
+                panel.grid.major.y = element_line(size = 0.5, linetype = 'solid',
+                                                  colour = "gray20"),
+                axis.title.y = element_text(color = "white", size = 12),
+                axis.title.y.right = element_text(color = "white", size = 12),
+                axis.text.y = element_text(color = "white"),
+                axis.text.y.right = element_text(color = "white"),
+                axis.text.x = element_text(color = "white"),
+                axis.ticks.x = element_line(color = "white"),
+                axis.text=element_text(size = 10))
+
 style2 <- scale_fill_gradientn(name = "", colors = c("#dde6fb", "#0b2358"))
 
 
@@ -136,7 +151,14 @@ ui <- fluidPage(
                                plotlyOutput("state_map", width = 1000, height = 600)
                         )
                                
+                               ),
+                    
+                    fluidRow(
+                        column(width = 3),
+                        column(width = 9,
+                               plotlyOutput("bottom_chart", width = 1000, height = 600)
                                )
+                    )
                ),
                
                tabPanel("County Level",

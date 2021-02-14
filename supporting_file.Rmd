@@ -41,6 +41,10 @@ options(tigris_use_cache = TRUE)
 # Change data save date
 
 end_date <- "2021-02-12"
+
+hhs_icu_occupancy <- "~/Desktop/Projects/basic_operations/data/estimated_icu_20210208_1835.csv"
+
+hhs_hosp_level <- "~/Desktop/Projects/basic_operations/data/reported_hospital_capacity_admissions_facility_level_weekly_average_timeseries_20210207.csv"
 ```
 
 ```{r}
@@ -107,7 +111,7 @@ state_pop <- get_acs(geography = "state",
           "state_geometry" = geometry)  
 
 # State abbreviations
-# c <- read_excel("data/state_abbreviations.xlsx")
+abbrev <- read_excel("~/Desktop/Projects/basic_operations/data/state_abbreviations.xlsx")
 
 # Vaccines data
 
@@ -309,7 +313,7 @@ state2 <- read_csv(state_text) %>%
          new_cases,
          new_deaths,
          "today_cases_7day_avg" = cases_7day_avg,
-         "today_deaths_7day_avg" = deaths_7day_avg)
+         "today_deaths_7day_avg" = deaths_7day_avg) 
 
 part1 <- state2 %>% 
     pivot_longer(!c(date), names_to = "view", values_to = "number") %>% 
@@ -407,11 +411,114 @@ saveRDS(vaccines2, file = paste("analysis_app/data_files/vax_chart_data", end_da
 
 
 ```{r}
-hhs_icu_occupancy <- "~/Desktop/Projects/basic_operations/data/estimated_icu_20210208_1835.csv"
 
-hhs_hosp_level <- "~/Desktop/Projects/basic_operations/data/reported_hospital_capacity_admissions_facility_level_weekly_average_timeseries_20210207.csv"
+hosp <- read_csv(hhs_icu_occupancy) %>% 
+  clean_names() %>% 
+  select(state, 
+         date = "collection_date",
+         num_ICU_bed_occupied = "staffed_adult_icu_beds_occupied_estimated",
+         pct_ICU_bed_occupied = "percentage_of_staffed_adult_icu_beds_occupied_estimated") %>% 
+  filter(state != "CW") %>% 
+  left_join(abbrev, by = c("state" = "abbreviation"))
+
+hosp_delta_test <- hosp %>% 
+  group_by(state.y) %>% 
+  slice_max(order_by = date, n = 1)
+
+map2 <- state_pop %>% 
+  right_join(hosp_delta_test, by = c("state" = "state.y"))
+
+cool <- map2 %>% 
+  ggplot() +
+  geom_sf(aes(fill = pct_ICU_bed_occupied), color = alpha("white", 1 / 2), size = 0.1) +
+  geom_sf(data = state_pop, fill = NA, color = "white") +
+  theme_void() +
+   labs(title = "")
+
+ggplotly(cool)
+```
 
 
+```{r}
 
+d <- read_excel("~/Desktop/Projects/basic_operations/data/effective_may_16_2004_county_and_state_fips (1).xlsx", skip = 25) %>% 
+  filter(!is.na(FIPS)) %>% 
+  clean_names() %>% 
+    select(fips_code = "fips",
+         county = "county_town") %>% 
+  mutate(county = str_remove_all(county, " County")) %>% 
+  mutate(county = str_remove_all(county, " Parish")) 
+
+d$fips_code = as.character(d$fips_code)
+
+hosp_data <- read_csv(hhs_hosp_level) %>%
+  clean_names() %>% 
+  left_join(abbrev, by = c("state" = "abbreviation")) %>% 
+  left_join(d, by = "fips_code") %>% 
+  select(state = "state.y", 
+         county,
+         date = "collection_week",
+         fips_code, 
+         zip,
+         hospital_name,
+         x_total_icu_beds = "total_icu_beds_7_day_avg",
+         y_icu_beds_used = "icu_beds_used_7_day_avg",
+         x_total_staffed_adult_icu_beds = "total_staffed_adult_icu_beds_7_day_avg",
+         y_staffed_adult_icu_bed_occupancy = "staffed_adult_icu_bed_occupancy_7_day_avg",
+         x_all_adult_hospital_inpatient_beds = "all_adult_hospital_inpatient_beds_7_day_avg",
+         y_all_adult_hospital_inpatient_bed_occupied = "all_adult_hospital_inpatient_bed_occupied_7_day_avg")
+
+hosp_data$date <- as.Date(hosp_data$date, "%m/%d/%y")
+
+hosp_data
+hosp <- hosp_data %>% 
+  filter(date > "2020-01-12") %>% 
+# WANT TO PUSH UP THIS DATE REGULARLY
+  group_by(hospital_name) %>% 
+  mutate(pct_all_inpatient_occupied = 
+           100 * y_all_adult_hospital_inpatient_bed_occupied / x_all_adult_hospital_inpatient_beds) %>% 
+  filter(x_all_adult_hospital_inpatient_beds != 0 &
+         y_all_adult_hospital_inpatient_bed_occupied != 0 &
+         x_all_adult_hospital_inpatient_beds != -999999 &
+         y_all_adult_hospital_inpatient_bed_occupied != -999999) %>% 
+      group_by(hospital_name) %>% 
+    slice_max(order_by = date, n = 1) %>% 
+   # filter(state == "Minnesota" & county == "St. Louis")
+    group_by(state, county) %>% 
+    summarize(county_avg = mean(pct_all_inpatient_occupied, na.rm=TRUE)) %>% 
+    mutate(county_avg = case_when(county_avg > 100 ~ 100, 
+                                     county_avg <= 100 ~ county_avg))
+
+hosp_map_county <- county_pop %>% 
+  right_join(hosp, by = c("state", "county"))
+
+awesome <- hosp_map_county %>% 
+#  filter(grepl("Alabama", state)) %>% 
+  ggplot() +
+    geom_sf(data = county_pop, aes(), color = alpha("gray", 1 / 2), size = 0.1) +
+    geom_sf(aes(fill = county_avg), color = alpha("white", 1 / 2), size = 0.1) +
+    geom_sf(data = state_pop, fill = NA, color = "white") +
+  theme_void() +
+  scale_fill_viridis_c(name = "Occupied ICU Bed Capacity   
+                         ", 
+                         limits = c(0,100), breaks = c(0, 25, 50, 75, 100), 
+                         labels=c("0%", "25%","50%", "75%", "100%"), 
+                         option = "inferno", 
+                         direction = -1) +
+   labs(caption = "Occupancy levels represent average of all reporting hospitals in the county") +
+  theme(plot.title = element_text(size = 13),
+        plot.subtitle = element_text(size = 9),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 10),
+        legend.position = "right",
+      legend.key.width = unit(0.5, "cm")) + 
+  theme2
+
+saveRDS(hosp, file = paste("analysis_app/data_files/awesome", end_date, ".rds", sep = ""))
 
 ```
+
+```{r}
+
+```
+

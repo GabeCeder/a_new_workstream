@@ -27,6 +27,8 @@ county_map_data <- read_rds("data_files/county_map_data2021-02-13.rds")
 chart_data <- read_rds("data_files/case_chart_data2021-02-12.rds")
 vax_chart_data <- read_rds("data_files/vax_chart_data2021-02-12.rds")
 
+awesome <- read_rds("data_files/awesome2021-02-12.rds")
+
 
 geo <- read_rds("data_files/geo_data.rds")
 county_geo <- read_rds("data_files/county_geo_data.rds")
@@ -51,20 +53,21 @@ theme2 <- theme(plot.title = element_blank(),
                 panel.background = element_rect(fill = "transparent", colour = NA),
                 plot.background = element_rect(fill = "transparent", colour = NA))
 
-theme3 <- theme(plot.title = element_text(color = "white"),
+theme3 <- theme(plot.title = element_text(color = "white", face = "bold"),
                 panel.grid.major = element_blank(), 
                 panel.grid.minor = element_blank(),
                 panel.background = element_rect(fill = "transparent", colour = NA),
                 plot.background = element_rect(fill = "transparent", colour = NA),
                 panel.grid.major.y = element_line(size = 0.5, linetype = 'solid',
-                                                  colour = "gray20"),
+                                                  colour = "gray30"),
                 axis.title.y = element_text(color = "white", size = 12),
                 axis.title.y.right = element_text(color = "white", size = 12),
                 axis.text.y = element_text(color = "white"),
                 axis.text.y.right = element_text(color = "white"),
-                axis.text.x = element_text(color = "white"),
+                axis.text.x = element_text(color = "white", angle = 45),
                 axis.ticks.x = element_line(color = "white"),
-                axis.text=element_text(size = 10))
+                axis.text = element_text(size = 10),
+                plot.caption = element_text(color = "white"))
 
 style2 <- scale_fill_gradientn(name = "", colors = c("#dde6fb", "#0b2358"))
 
@@ -113,7 +116,7 @@ ui <- fluidPage(
                                
                                br(),
                                
-                               wellPanel(h4("Select Visualization Options Below:", 
+                               wellPanel(h5("Select Viewing Options:", 
                                             style = "color:#0b2358", 
                                             align = "left"), 
                                          style = "background-color:white;"),
@@ -160,7 +163,7 @@ ui <- fluidPage(
                     fluidRow(
                         column(width = 3),
                         column(width = 9,
-                               plotlyOutput("bottom_chart", width = 1000, height = 600)
+                               plotlyOutput("bottom_chart", width = 1000, height = 400)
                                )
                     )
                ),
@@ -174,7 +177,7 @@ ui <- fluidPage(
                                    
                                    br(),
                                    
-                                   wellPanel(h4("Select Visualization Options Below:", 
+                                   wellPanel(h5("Select Viewing Options:", 
                                                 style = "color:#0b2358", 
                                                 align = "left"), 
                                              style = "background-color:white;"),
@@ -215,6 +218,13 @@ ui <- fluidPage(
                                    plotOutput("county_map", width = 1000, height = 600)
                             )
                             
+                        ),
+                        
+                        fluidRow(
+                            column(width = 3),
+                            column(width = 9,
+                                   plotlyOutput("bottom_chart2", width = 1000, height = 400)
+                            )
                         )
                         
                ),
@@ -223,14 +233,18 @@ ui <- fluidPage(
                         
                         fluidRow(
                             
-                            column(width = 6,
+                            column(width = 3,
                                    selectInput(inputId = "select_view3",
                                               label = "",
-                                              choices = c("Cases" = "today_cases_7day_avg"),
+                                              choices = c("State Level" = "state",
+                                                          "County Level" = "county"),
                                               multiple = FALSE,
-                                              selected = "Cases")),
-                            wellPanel(plotlyOutput("county_test"))
-                        )
+                                              selected = "State Level")),
+                            column(width = 9,
+                                   plotOutput("hosp", width = 1000, height = 600)
+                                   )
+                            )
+                       
                ),
                
                tabPanel("About the Data",
@@ -253,7 +267,7 @@ ui <- fluidPage(
 
     # Add name 
     
-    h4("Compiled by Gabe Cederberg", style = "color:white", align = "right")
+    h5("Compiled by Gabe Cederberg", style = "color:white", align = "right")
 )
 
 # Define server logic required to draw a histogram
@@ -366,7 +380,6 @@ server <- function(input, output) {
         
         if (input$select_view == "vax") {
             
-            
             avg_daily_stat <- vax_chart_data %>% 
                 slice_max(order_by = date) %>% 
                 filter(slice1 == "vax") %>% 
@@ -374,25 +387,211 @@ server <- function(input, output) {
                 pull(millions) %>% 
                 round(2)
             
-            chart <- vaccines2 %>% filter(slice1 == input$select_view) %>% 
+            chart <- vaccines2 %>% filter(slice1 == "vax") %>% 
                 ggplot() +
-                geom_line(aes(x = date, y = today_seven_day_avg_doses_adm / 1000000), color = "white") +
-                geom_col(aes(x = date, y = new_doses / 1000000), fill = "white", color = "white", alpha = 0.4) +
-                # scale_x_date(date_labels = "%B", 
-                #            date_breaks = "months", 
-                #            name = "") +
-                labs(x = "", y = "Daily Vaccine Doses Administered (millions)",
+                geom_line(aes(x = date, 
+                              y = today_seven_day_avg_doses_adm / 1000000),
+                          color = "white") +
+                geom_col(aes(x = date,
+                             y = new_doses / 1000000,
+                             text = paste("Date: ", date, "<br>",
+                                          round(new_doses / 1000000, 2), "M vaccinations reported by CDC", sep = "")),
+                         fill = "white",
+                         color = NA,
+                         alpha = 0.6) +
+                    # scale_x_date(date_labels = "%B", 
+                    #            date_breaks = "months", 
+                    #            name = "") +
+                labs(x = "", y = "Daily Vaccine Doses Administered (millions) \n ",
                      title = paste("In the past week, the United States averaged ", avg_daily_stat, " million vaccinations per day.", sep = "")) +
                 theme3
             
-            ggplotly(chart)
+            ggplotly(chart, tooltip = "text")
         }
         
         else {
             
+            if (input$select_view == "cases") {
+                
+                avg_daily_stat <- aa %>% 
+                    slice_max(order_by = date) %>% 
+                    filter(slice1 == input$select_view) %>% 
+                    pull(avg_number) %>% 
+                    round(0)
+                
+                avg_daily_stat <- comma(avg_daily_stat)
+                
+                chart <- aa %>% filter(slice1 == "cases") %>% 
+                    ggplot() +
+                    geom_line(aes(x = date, 
+                                  y = avg_number / 1000), 
+                              color = "white") +
+                    geom_col(aes(x = date, 
+                                 y = daily_number / 1000,
+                                 text = paste("Date: ", date, "<br>",
+                                              round(daily_number), " cases reported", sep = "")), 
+                             color = NA, 
+                             fill = "white", 
+                             alpha = 0.4) +
+                    scale_x_date(date_labels = "%B", 
+                                 date_breaks = "months", 
+                                 name = "") +
+                    labs(y = "7-Day Average Daily Cases (thousands) \n   ",
+                         title = paste("In the past week, the United States averaged ", 
+                                       avg_daily_stat, " cases per day.", sep = "")) +
+                    theme3
+                
+                ggplotly(chart, tooltip = "text")          
+         }
+            
+            else {
+            
+                avg_daily_stat <- aa %>% 
+                    slice_max(order_by = date) %>% 
+                    filter(slice1 == input$select_view) %>% 
+                    pull(avg_number) %>% 
+                    round(0)
+                
+                avg_daily_stat <- comma(avg_daily_stat)
+                
+                chart <- aa %>% filter(slice1 == "deaths") %>% 
+                    ggplot() +
+                    geom_line(aes(x = date, y = avg_number / 1000), color = "white") +
+                    geom_col(aes(x = date, y = daily_number / 1000), color = NA, fill = "white", alpha = 0.4) +
+                    scale_x_date(date_labels = "%B", 
+                                 date_breaks = "months", 
+                                 name = "") +
+                    labs(y = "7-Day Average Daily Deaths (thousands) \n ",
+                         title = paste("In the past week, the United States averaged ", 
+                                       avg_daily_stat, " deaths per day.", sep = "")) +
+                    theme3
+                    
+                ggplotly(chart, tooltip = "text")
+                
+            }
         }
         
     })
+    
+    output$bottom_chart2 <- renderPlotly ({
+        
+        req(input$select_view2)
+        
+        if (input$select_view2 == "cases") {
+            
+            avg_daily_stat <- aa %>% 
+                slice_max(order_by = date) %>% 
+                filter(slice1 == input$select_view2) %>% 
+                pull(avg_number) %>% 
+                round(0)
+            
+            avg_daily_stat <- comma(avg_daily_stat)
+            
+            chart <- aa %>% filter(slice1 == "cases") %>% 
+                ggplot() +
+                geom_line(aes(x = date, 
+                              y = avg_number / 1000), 
+                          color = "white") +
+                geom_col(aes(x = date, 
+                             y = daily_number / 1000,
+                             text = paste("Date: ", date, "<br>",
+                                          round(daily_number), " cases reported", sep = "")), 
+                         color = NA, 
+                         fill = "white", 
+                         alpha = 0.4) +
+                scale_x_date(date_labels = "%B", 
+                             date_breaks = "months", 
+                             name = "") +
+                labs(y = "7-Day Average Daily Cases (thousands) \n   ",
+                     title = paste("In the past week, the United States averaged ", 
+                                   avg_daily_stat, " cases per day.", sep = "")) +
+                theme3
+            
+            ggplotly(chart, tooltip = "text")          
+        }
+        
+        else {
+            
+            avg_daily_stat <- aa %>% 
+                slice_max(order_by = date) %>% 
+                filter(slice1 == input$select_view2) %>% 
+                pull(avg_number) %>% 
+                round(0)
+            
+            avg_daily_stat <- comma(avg_daily_stat)
+            
+            chart <- aa %>% filter(slice1 == "deaths") %>% 
+                ggplot() +
+                geom_line(aes(x = date, y = avg_number / 1000), color = "white") +
+                geom_col(aes(x = date, y = daily_number / 1000), color = NA, fill = "white", alpha = 0.4) +
+                scale_x_date(date_labels = "%B", 
+                             date_breaks = "months", 
+                             name = "") +
+                labs(y = "7-Day Average Daily Deaths (thousands) \n ",
+                     title = paste("In the past week, the United States averaged ", 
+                                   avg_daily_stat, " deaths per day.", sep = "")) +
+                theme3
+            
+            ggplotly(chart, tooltip = "text")
+            
+        }
+        
+    })
+    
+    
+    output$hosp <- renderPlot ({
+        
+        if(input$select_view3 == "state") {
+            
+            # county_geo %>% 
+            #     ggplot(aes(fill = pop, geometry = geometry)) +
+            #     geom_sf()
+            # 
+            
+            awesome <- awesome
+
+            hhh <- county_geo %>%
+                right_join(awesome, by = c("state", "county"))
+
+            a <- hhh %>%
+                ggplot() +
+                geom_sf(color = alpha("gray", 1 / 2), size = 0.1) +
+                geom_sf(aes(fill = county_avg), color = alpha("white", 1 / 2), size = 0.1) +
+                geom_sf(data = geo, fill = NA, color = "white") +
+                labs(caption = "Occupancy levels represent average of all reporting hospitals in the county") +
+                    theme_void() +
+                    theme2 +
+                    style2
+                
+                    
+                # scale_fill_viridis_c(name = "Occupied ICU Bed Capacity
+                #              ",
+                #                      limits = c(0,100), breaks = c(0, 25, 50, 75, 100),
+                #                      labels=c("0%", "25%","50%", "75%", "100%"),
+                #                      option = "inferno",
+                #                      direction = -1) +
+                # theme(plot.title = element_text(size = 13),
+                #       plot.subtitle = element_text(size = 9),
+                #       legend.title = element_blank(),
+                #       legend.text = element_text(size = 10),
+                #       legend.position = "right",
+                #       legend.key.width = unit(0.5, "cm"))
+
+            a
+            
+        }
+        
+        else {
+            county_geo %>% 
+                ggplot(aes(fill = pop, geometry = geometry)) +
+                geom_sf() +
+                theme_void() +
+                theme2 +
+                style2
+        }
+        
+        
+    }, bg="transparent")
     
     
 }

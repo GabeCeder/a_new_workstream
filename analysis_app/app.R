@@ -54,7 +54,7 @@ theme2 <- theme(plot.title = element_blank(),
                 panel.grid.minor = element_blank(),
                 panel.background = element_rect(fill = "transparent", colour = NA),
                 plot.background = element_rect(fill = "transparent", colour = NA),
-                plot.caption = element_text(color = "white", size = 16))
+                plot.caption = element_text(color = "white", size = 10))
 
 theme3 <- theme(plot.title = element_text(color = "white", face = "bold"),
                 panel.grid.major = element_blank(), 
@@ -99,8 +99,6 @@ ui <- fluidPage(
     
     h2(strong("Mapping COVID-19 in the United States", 
               style = "color: white"), align = "center"),
-    h5(paste("Data Last Updated ", end_date, sep = ""),
-              style = "color: white", align = "center"),
     br(),
     
     # Create the navigation bar, while making the title blank
@@ -373,6 +371,10 @@ ui <- fluidPage(
                )
                ),
                
+    
+    h5(paste("Data Last Updated ", end_date, sep = ""),
+       style = "color: white", align = "center"),
+    
     # Add name 
     
     h6("Compiled by Gabe Cederberg", style = "color:white", align = "right")

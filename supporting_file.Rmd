@@ -423,10 +423,11 @@ hosp <- read_csv(hhs_icu_occupancy) %>%
 
 hosp_delta_test <- hosp %>% 
   group_by(state.y) %>% 
-  slice_max(order_by = date, n = 1)
+  slice_max(order_by = date, n = 1) %>% 
+  select(date, num_ICU_bed_occupied, pct_ICU_bed_occupied, "state" = state.y)
 
 map2 <- state_pop %>% 
-  right_join(hosp_delta_test, by = c("state" = "state.y"))
+  right_join(hosp_delta_test, by = "state")
 
 cool <- map2 %>% 
   ggplot() +
@@ -436,6 +437,9 @@ cool <- map2 %>%
    labs(title = "")
 
 ggplotly(cool)
+
+saveRDS(hosp_delta_test, file = paste("analysis_app/data_files/cool", end_date, ".rds", sep = ""))
+
 ```
 
 

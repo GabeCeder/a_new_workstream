@@ -28,7 +28,7 @@ chart_data <- read_rds("data_files/case_chart_data2021-02-12.rds")
 vax_chart_data <- read_rds("data_files/vax_chart_data2021-02-12.rds")
 
 awesome <- read_rds("data_files/awesome2021-02-12.rds")
-
+cool <- read_rds("data_files/cool2021-02-12.rds")
 
 geo <- read_rds("data_files/geo_data.rds")
 county_geo <- read_rds("data_files/county_geo_data.rds")
@@ -51,7 +51,8 @@ theme2 <- theme(plot.title = element_blank(),
                 panel.grid.major = element_blank(), 
                 panel.grid.minor = element_blank(),
                 panel.background = element_rect(fill = "transparent", colour = NA),
-                plot.background = element_rect(fill = "transparent", colour = NA))
+                plot.background = element_rect(fill = "transparent", colour = NA),
+                plot.caption = element_text(color = "white"))
 
 theme3 <- theme(plot.title = element_text(color = "white", face = "bold"),
                 panel.grid.major = element_blank(), 
@@ -66,8 +67,7 @@ theme3 <- theme(plot.title = element_text(color = "white", face = "bold"),
                 axis.text.y.right = element_text(color = "white"),
                 axis.text.x = element_text(color = "white", angle = 45),
                 axis.ticks.x = element_line(color = "white"),
-                axis.text = element_text(size = 10),
-                plot.caption = element_text(color = "white"))
+                axis.text = element_text(size = 10))
 
 style2 <- scale_fill_gradientn(name = "", colors = c("#dde6fb", "#0b2358"))
 
@@ -542,14 +542,7 @@ server <- function(input, output) {
     output$hosp <- renderPlot ({
         
         if(input$select_view3 == "state") {
-            
-            # county_geo %>% 
-            #     ggplot(aes(fill = pop, geometry = geometry)) +
-            #     geom_sf()
-            # 
-            
-            awesome <- awesome
-
+        
             hhh <- county_geo %>%
                 right_join(awesome, by = c("state", "county"))
 
@@ -562,32 +555,25 @@ server <- function(input, output) {
                     theme_void() +
                     theme2 +
                     style2
-                
-                    
-                # scale_fill_viridis_c(name = "Occupied ICU Bed Capacity
-                #              ",
-                #                      limits = c(0,100), breaks = c(0, 25, 50, 75, 100),
-                #                      labels=c("0%", "25%","50%", "75%", "100%"),
-                #                      option = "inferno",
-                #                      direction = -1) +
-                # theme(plot.title = element_text(size = 13),
-                #       plot.subtitle = element_text(size = 9),
-                #       legend.title = element_blank(),
-                #       legend.text = element_text(size = 10),
-                #       legend.position = "right",
-                #       legend.key.width = unit(0.5, "cm"))
-
             a
             
         }
         
         else {
-            county_geo %>% 
-                ggplot(aes(fill = pop, geometry = geometry)) +
-                geom_sf() +
+            
+            iii <- geo %>% 
+                right_join(cool, by = "state")
+            
+            b <- iii %>% 
+                ggplot() +
+                geom_sf(aes(fill = pct_ICU_bed_occupied), color = alpha("white", 1 / 2), size = 0.1) +
+                geom_sf(data = geo, fill = NA, color = "white") +
                 theme_void() +
+                labs(title = "") +
                 theme2 +
                 style2
+            
+            b
         }
         
         

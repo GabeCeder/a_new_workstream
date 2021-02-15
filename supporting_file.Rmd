@@ -532,7 +532,8 @@ ctp <- read_csv(hospitalizations) %>%
   left_join(abbrev, by = "abbreviation") %>% 
   group_by(date) %>% 
   filter(!is.na(hosp)) %>% 
-  summarize(hosp = sum(hosp))
+  summarize(hosp = sum(hosp)) %>% 
+  mutate(hosp_7day_avg =  rollapply(hosp, 7, mean, fill = NA, align = 'right'))
 
 hosp_stat <- ctp %>% 
   slice_max(order_by = date) %>% 

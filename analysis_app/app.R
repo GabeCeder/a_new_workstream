@@ -198,7 +198,7 @@ ui <- fluidPage(
                                                choices = c("Cases" = "cases",
                                                            "Deaths" = "deaths"),
                                                multiple = FALSE,
-                                               selected = "Cases"),
+                                               selected = "cases"),
                                    
                                    selectInput(inputId = "select_time2",
                                                label = "",
@@ -206,7 +206,7 @@ ui <- fluidPage(
                                                            "% Change Compared to 7 Days Ago" = "WoW",
                                                            "Cumulative All-Time Total" = "cumulative"),
                                                multiple = FALSE,
-                                               selected = "Current Daily Level (7-Day Avg)"),
+                                               selected = "cumulative"),
                                    
                                    selectInput(inputId = "select_cut2",
                                                label = "",
@@ -254,7 +254,15 @@ ui <- fluidPage(
                                               choices = c("State Level (% ICU beds occupied)" = "state",
                                                           "County Level (% IP beds occupied)" = "county"),
                                               multiple = FALSE,
-                                              selected = "State Level")),
+                                              selected = "State Level"),
+                                   
+                                   selectInput(inputId = "select_time5",
+                                               label = "",
+                                               choices = c("Current Daily Level" = "today"),
+                                               multiple = FALSE,
+                                               selected = "today")
+                                   
+                                   ),
                             
                             column(width = 1),
                             

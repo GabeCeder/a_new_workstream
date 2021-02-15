@@ -493,7 +493,8 @@ hosp <- hosp_data %>%
     group_by(state, county) %>% 
     summarize(county_avg = mean(pct_all_inpatient_occupied, na.rm=TRUE)) %>% 
     mutate(county_avg = case_when(county_avg > 100 ~ 100, 
-                                     county_avg <= 100 ~ county_avg))
+                                     county_avg <= 100 ~ county_avg)) %>% 
+  filter(county_avg >= 0)
 
 hosp_map_county <- county_pop %>% 
   right_join(hosp, by = c("state", "county"))

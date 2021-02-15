@@ -258,9 +258,9 @@ ui <- fluidPage(
                                    
                                    selectInput(inputId = "select_time5",
                                                label = "",
-                                               choices = c("Current Daily Level" = "today"),
+                                               choices = c("Current Level (updated weekly)" = "current"),
                                                multiple = FALSE,
-                                               selected = "today")
+                                               selected = "current")
                                    
                                    ),
                             
@@ -345,7 +345,7 @@ ui <- fluidPage(
                                    ),
                                    
                                    wellPanel(
-                                       h4(strong("Background image from the The Heller School for Social Policy and Management ", 
+                                       h4(strong("Background image from the Heller School for Social Policy and Management ", 
                                                  a(href = "https://heller.brandeis.edu/lurie/news/covid-19.html", "here", 
                                                    .noWS = "outside"), .noWS = c("after-begin", "before-end"), 
                                                  ".", style = "color:#d9d9d9"))
@@ -389,7 +389,9 @@ ui <- fluidPage(
                                            h4("Code and image credits can be accessed from this GitHub repository:", align = "center", style = "color:#d9d9d9"),
                                            h5(strong(a(href = "https://github.com/GabeCeder/a_new_workstream", 
                                                        "github.com/GabeCeder/a_new_workstream", 
-                                                       .noWS = "outside"), .noWS = c("after-begin", "before-end")), align = "center", style = "color:#d9d9d9"))
+                                                       .noWS = "outside"), .noWS = c("after-begin", "before-end")), align = "center", style = "color:#d9d9d9")),
+                                       
+                                       br()
                                        
                                    )
                             )

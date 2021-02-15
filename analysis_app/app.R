@@ -19,18 +19,20 @@ library(scales)
 
 # Set date
 
-end_date <- "Feb. 12, 2021"
+end_date <- "Feb. 14, 2021"
 
 # Load data
 
-map_data <- read_rds("data_files/map_data2021-02-13.rds")
-county_map_data <- read_rds("data_files/county_map_data2021-02-13.rds")
+map_data <- read_rds("data_files/map_data2021-02-14.rds")
+county_map_data <- read_rds("data_files/county_map_data2021-02-14.rds")
 
-chart_data <- read_rds("data_files/case_chart_data2021-02-12.rds")
-vax_chart_data <- read_rds("data_files/vax_chart_data2021-02-12.rds")
+chart_data <- read_rds("data_files/case_chart_data2021-02-14.rds")
+vax_chart_data <- read_rds("data_files/vax_chart_data2021-02-14.rds")
 
-awesome <- read_rds("data_files/awesome2021-02-12.rds")
-cool <- read_rds("data_files/cool2021-02-12.rds")
+awesome <- read_rds("data_files/awesome2021-02-14.rds")
+cool <- read_rds("data_files/cool2021-02-14.rds")
+
+hosp_figure <- read_rds("data_files/ctp2021-02-14.rds")
 
 geo <- read_rds("data_files/geo_data.rds")
 county_geo <- read_rds("data_files/county_geo_data.rds")
@@ -56,7 +58,7 @@ theme2 <- theme(plot.title = element_blank(),
                 plot.background = element_rect(fill = "transparent", colour = NA),
                 plot.caption = element_text(color = "white", size = 10))
 
-theme3 <- theme(plot.title = element_text(color = "white", face = "bold"),
+theme3 <- theme(plot.title = element_text(color = "white", face = "bold", hjust = 0.5),
                 panel.grid.major = element_blank(), 
                 panel.grid.minor = element_blank(),
                 panel.background = element_rect(fill = "transparent", colour = NA),
@@ -87,7 +89,7 @@ ui <- fluidPage(
     
     # Set background image to an image of COVID-19  
     
-    setBackgroundImage(src = "coronavirus5.jpg"),
+    setBackgroundImage(src = "coronavirus8.jpg"),
                  #      https://heller.brandeis.edu/lurie/images/stock-images/coronavirus.jpg
     
     theme = bs_theme(version = 4, bootswatch = "minty"
@@ -214,7 +216,9 @@ ui <- fluidPage(
                                                selected = "Per 100K People")
                             ),
                             
-                            column(width = 9, 
+                            column(width = 1),
+                            
+                            column(width = 8, 
                                    plotOutput("county_map", width = "100%"
                                               #, height = 600
                                               ),
@@ -227,7 +231,7 @@ ui <- fluidPage(
                         
                ),
                
-               tabPanel(strong(" ICU Bed Occupancy "),
+               tabPanel(strong(" Hospitalizations "),
                         
                         fluidRow(
                             
@@ -247,12 +251,17 @@ ui <- fluidPage(
 
                                    selectInput(inputId = "select_view3",
                                               label = "",
-                                              choices = c("State Level (% of beds occupied)" = "state",
-                                                          "County Level (% of beds occupied)" = "county"),
+                                              choices = c("State Level (% ICU beds occupied)" = "state",
+                                                          "County Level (% IP beds occupied)" = "county"),
                                               multiple = FALSE,
                                               selected = "State Level")),
-                            column(width = 9,
-                                   plotOutput("hosp", width = "100%")
+                            
+                            column(width = 1),
+                            
+                            column(width = 8,
+                                   plotOutput("hosp", width = "100%"),
+                                   
+                                   plotOutput("hosp_chart", width = "100%")
                                    )
                             )
                        
@@ -261,25 +270,24 @@ ui <- fluidPage(
                tabPanel(strong(" About the Data "),
                         
                         fluidRow(
+                            column(1),
                             
                             column(3,
                                    
                                    
                                        wellPanel(
-                                           h2(strong("These are the four datasets used in this analysis:"), align = "center", 
+                                           h2(strong("These are the data sources used in this analysis:"), align = "center", 
                                               style = "color:#0b2358"), 
                                            style = "background-color:white;")
                                        
                             ),
                             
-                            column(1),
-
                             column(4,
                                    
                                    wellPanel(
                                        img(src = "https://18zu3o13q8pa3oob523tuov2-wpengine.netdna-ssl.com/wp-content/uploads/2020/01/the-new-york-times-logo-900x330-1.png", width = "100%"),
                                        h4(strong("Daily COVID-19 Case and Death Totals from The New York Times"), style = "color:#d9d9d9"),
-                                       h4("These datasets can be found ",
+                                       h5("These datasets can be found ",
                                           a(href = "https://github.com/nytimes/covid-19-data", "here", 
                                             .noWS = "outside"), .noWS = c("after-begin", "before-end"), 
                                           ".", style = "color:#d9d9d9")
@@ -287,8 +295,8 @@ ui <- fluidPage(
                                    
                                    wellPanel(
                                        img(src = "https://psabank.com/wp-content/uploads/2019/06/HHS-Seal-1600x900.png", width = "100%"),
-                                       h4(strong("State- and Hospital-Level ICU Bed Occupancy Data from the U.S. Department of Health and Human Services"), style = "color:#d9d9d9"),
-                                       h4("These datasets can be found ",
+                                       h4(strong("State-Level ICU Bed Occupancy and Hospital-Level Inpatient Hospital Bed Occupancy from the U.S. Department of Health and Human Services"), style = "color:#d9d9d9"),
+                                       h5("These datasets can be found ",
                                           a(href = "https://healthdata.gov/dataset/covid-19-estimated-patient-impact-and-hospital-capacity-state", "here", 
                                             .noWS = "outside"), 
                                           " and ",
@@ -298,10 +306,12 @@ ui <- fluidPage(
                                    ),
                                    
                                    wellPanel(
-                                       h4(strong("Background image from the The Heller School for Social Policy and Management ", 
-                                                 a(href = "https://heller.brandeis.edu/lurie/news/covid-19.html", "here", 
-                                                   .noWS = "outside"), .noWS = c("after-begin", "before-end"), 
-                                                 ".", style = "color:#d9d9d9"))
+                                       img(src = "https://covid19communicationnetwork.org/wp-content/uploads/2020/09/Screen-Shot-2020-09-23-at-5.08.27-PM.png", width = "100%"),
+                                       h4(strong("Time Series of COVID-19 Hospitalizations from The COVID Tracking Project"), style = "color:#d9d9d9"),
+                                       h5("This data can be found ",
+                                          a(href = "https://covidtracking.com/data/download", "here", 
+                                            .noWS = "outside"), .noWS = c("after-begin", "before-end"), 
+                                          ".", style = "color:#d9d9d9")
                                    )
                                    
                             ),
@@ -310,7 +320,7 @@ ui <- fluidPage(
                                    wellPanel(
                                        img(src = "https://www.workingbuildings.com/images/projects/cdc_banner.png", width = "100%"),
                                        h4(strong("State-Level Vaccination Data from the U.S. Centers for Disease Control and Prevention"), style = "color:#d9d9d9"),
-                                       h4("The original data can be found ",
+                                       h5("The original data can be found ",
                                           a(href = "https://covid.cdc.gov/covid-data-tracker/#vaccinations", "here", 
                                             .noWS = "outside"), ", and my analysis pulls the CDC data from Youyang Gu's fantastic time series dataset on GitHub ",
                                           a(href = "https://github.com/youyanggu/covid19-cdc-vaccination-data", "here", 
@@ -320,10 +330,17 @@ ui <- fluidPage(
                                    wellPanel(
                                        img(src = "https://www.vocecon.com/wp-content/uploads/american-community-survey.jpg", width = "100%"),
                                        h4(strong("State Population and State Geometry Data from the U.S. Census American Community Survey 2014-2018"), style = "color:#d9d9d9"),
-                                       h4("More information can be found ",
+                                       h5("More information can be found ",
                                           a(href = "https://cran.r-project.org/web/packages/tidycensus/tidycensus.pdf", "here", 
                                             .noWS = "outside"), .noWS = c("after-begin", "before-end"), 
-                                          ".", style = "color:#d9d9d9")
+                                          ".", style = "color:#d9d9d9"),
+                                   ),
+                                   
+                                   wellPanel(
+                                       h4(strong("Background image from the The Heller School for Social Policy and Management ", 
+                                                 a(href = "https://heller.brandeis.edu/lurie/news/covid-19.html", "here", 
+                                                   .noWS = "outside"), .noWS = c("after-begin", "before-end"), 
+                                                 ".", style = "color:#d9d9d9"))
                                    )
                             )
                             
@@ -349,19 +366,20 @@ ui <- fluidPage(
                                    
                                    wellPanel(
                                        
-                                       h3(strong("Hi, I'm Gabe Cederberg. I'm currently on a gap year, and I'm a rising senior at Harvard studying 
+                                       h4(strong("Hi, I'm Gabe Cederberg. I'm currently on a gap year, and I'm a rising senior at Harvard studying 
                                    Government with a secondary in Economics."), align = "center", style = "color:#d9d9d9"),
                                        
                                        br(),
                                        
-                                       h3(strong("Feel free to reach out to me at gabriel.cederberg@gmail.com"), align = "center", style = "color:#d9d9d9"),
+                                       wellPanel(
+                                       h5("Feel free to reach out to me at gabriel.cederberg[at]gmail.com", align = "center", style = "color:#0b2358"),
+                                       style = "background-color:#d9d9d9;"),
                                        
                                        br(),
-                                       
 
                                        wellPanel(
-                                           h3("Code and image credits can be accessed from this GitHub repository:", align = "center", style = "color:#d9d9d9"),
-                                           h4(strong(a(href = "https://github.com/GabeCeder/a_new_workstream", 
+                                           h4("Code and image credits can be accessed from this GitHub repository:", align = "center", style = "color:#d9d9d9"),
+                                           h5(strong(a(href = "https://github.com/GabeCeder/a_new_workstream", 
                                                        "github.com/GabeCeder/a_new_workstream", 
                                                        .noWS = "outside"), .noWS = c("after-begin", "before-end")), align = "center", style = "color:#d9d9d9"))
                                        
@@ -377,7 +395,7 @@ ui <- fluidPage(
     
     # Add name 
     
-    h6("Compiled by Gabe Cederberg", style = "color:white", align = "right")
+    h6("Compiled by Gabe Cederberg", style = "color:white", align = "center")
 )
 
 # Define server logic required to draw a histogram
@@ -518,8 +536,8 @@ server <- function(input, output) {
                     # scale_x_date(date_labels = "%B", 
                     #            date_breaks = "months", 
                     #            name = "") +
-                labs(x = "", y = " \n Vaccine Doses Administered (millions) \n ",
-                     title = paste("In the past week, the United States averaged ", avg_daily_stat, " million vaccinations per day.", sep = "")) +
+                labs(x = "", y = "Vaccine Doses Administered (millions) \n ",
+                     title = paste("In the past week, the United States \n averaged ", avg_daily_stat, " million vaccinations per day.", sep = "")) +
                 theme3
             
             chart
@@ -553,8 +571,8 @@ server <- function(input, output) {
                     scale_x_date(date_labels = "%B", 
                                  date_breaks = "months", 
                                  name = "") +
-                    labs(y = " \n Daily Cases (thousands) \n   ",
-                         title = paste("In the past week, the United States averaged ", 
+                    labs(y = "Daily Cases (thousands) \n   ",
+                         title = paste("In the past week, the United States \n averaged ", 
                                        avg_daily_stat, " cases per day.", sep = "")) +
                     theme3
                 
@@ -583,7 +601,7 @@ server <- function(input, output) {
                                  date_breaks = "months", 
                                  name = "") +
                     labs(y = "Daily Deaths (thousands) \n ",
-                         title = paste("In the past week, the United States averaged ", 
+                         title = paste("In the past week, the United States \n averaged ", 
                                        avg_daily_stat, " deaths per day.", sep = "")) +
                     theme3
                   
@@ -626,8 +644,8 @@ server <- function(input, output) {
                 scale_x_date(date_labels = "%B", 
                              date_breaks = "months", 
                              name = "") +
-                labs(y = "  \n Daily Cases (thousands) \n   ",
-                     title = paste("In the past week, the United States averaged ", 
+                labs(y = "Daily Cases (thousands) \n   ",
+                     title = paste("In the past week, the United States \n averaged ", 
                                    avg_daily_stat, " cases per day.", sep = "")) +
                 theme3
             
@@ -655,8 +673,8 @@ server <- function(input, output) {
                 scale_x_date(date_labels = "%B", 
                              date_breaks = "months", 
                              name = "") +
-                labs(y = "  \n Daily Deaths (thousands) \n ",
-                     title = paste("In the past week, the United States averaged ", 
+                labs(y = "Daily Deaths (thousands) \n ",
+                     title = paste("In the past week, the United States \n averaged ", 
                                    avg_daily_stat, " deaths per day.", sep = "")) +
                 theme3
             
@@ -691,8 +709,7 @@ server <- function(input, output) {
         }
         
         else {
-            
-            
+
             hhh <- county_geo %>%
                 right_join(awesome, by = c("state", "county"))
             
@@ -702,7 +719,7 @@ server <- function(input, output) {
                 
                 geom_sf(aes(fill = county_avg), color = alpha("white", 1 / 2), size = 0.1) +
                 geom_sf(data = geo, fill = NA, color = "white") +
-                labs(caption = "ICU bed occupancy levels represent average of all reporting hospitals in the county") +
+                labs(caption = "Shading indicates average of all reporting hospitals in the county") +
                 theme_void() +
                 theme2 +
                 style2
@@ -713,6 +730,35 @@ server <- function(input, output) {
         
     }, bg="transparent")
     
+    
+    output$hosp_chart <- renderPlot({
+        
+        hosp_stat <- hosp_figure %>% 
+            slice_max(order_by = date) %>% 
+         #   summarize(thousands = hosp / 1000) %>% 
+            pull(hosp) %>% 
+            round(1)
+        
+        hosp_stat <- comma(hosp_stat)
+        
+        chart <- hosp_figure %>% 
+            ggplot() +
+            geom_line(aes(x = date, y = hosp / 1000), color = "white") +
+            geom_col(aes(x = date, y = hosp / 1000,
+                         text = paste("Date: ", date, "<br>",
+                                      round(hosp), " COVID-19 Hospitalizations", "<br>")), 
+                     color = NA, fill = "white", alpha = 0.4) +
+            scale_x_date(date_labels = "%B", 
+                         date_breaks = "months", 
+                         name = "") +
+            labs(y = "COVID-19 Hospitalizations (thousands)\n ",
+                 title = paste("On ", end_date, ", ", hosp_stat, " people were hospitalized \n with COVID-19 in the United States.", sep = "")) +
+            theme3
+        
+        chart
+    }
+    , bg="transparent"
+    )
     
 }
 

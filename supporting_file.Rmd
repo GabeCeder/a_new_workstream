@@ -40,11 +40,13 @@ options(tigris_use_cache = TRUE)
 ```{r}
 # Change data save date
 
-end_date <- "2021-02-12"
+end_date <- "2021-02-14"
 
-hhs_icu_occupancy <- "~/Desktop/Projects/basic_operations/data/estimated_icu_20210208_1835.csv"
+hhs_icu_occupancy <- "~/Desktop/Projects/basic_operations/data/estimated_icu_20210213_1618.csv"
 
-hhs_hosp_level <- "~/Desktop/Projects/basic_operations/data/reported_hospital_capacity_admissions_facility_level_weekly_average_timeseries_20210207.csv"
+hhs_hosp_level <- "~/Desktop/Projects/basic_operations/data/reported_hospital_capacity_admissions_facility_level_weekly_average_timeseries_20210214.csv"
+
+hospitalizations <- "analysis_app/data_files/all-states-history (5).csv"
 ```
 
 ```{r}
@@ -515,12 +517,34 @@ awesome <- hosp_map_county %>%
         legend.title = element_blank(),
         legend.text = element_text(size = 10),
         legend.position = "right",
-      legend.key.width = unit(0.5, "cm")) + 
-  theme2
+      legend.key.width = unit(0.5, "cm"))
 
 saveRDS(hosp, file = paste("analysis_app/data_files/awesome", end_date, ".rds", sep = ""))
 
 ```
+
+```{r}
+
+ctp <- read_csv(hospitalizations) %>% 
+  select(date, 
+         "abbreviation" = state,
+         "hosp" = hospitalizedCurrently) %>% 
+  left_join(abbrev, by = "abbreviation") %>% 
+  group_by(date) %>% 
+  filter(!is.na(hosp)) %>% 
+  summarize(hosp = sum(hosp))
+
+hosp_stat <- ctp %>% 
+  slice_max(order_by = date) %>% 
+  summarize(thousands = hosp / 1000) %>% 
+  pull(thousands) %>% 
+  round(1)
+
+saveRDS(ctp, file = paste("analysis_app/data_files/ctp", end_date, ".rds", sep = ""))
+
+
+```
+
 
 ```{r}
 

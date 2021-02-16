@@ -228,7 +228,7 @@ ui <- fluidPage(
                             )
                             
                         )
-                        
+                         
                ),
                
                tabPanel(strong(" Hospitalizations "),

@@ -19,20 +19,20 @@ library(scales)
 
 # Set date
 
-end_date <- "Feb. 15, 2021"
+end_date <- "Feb. 16, 2021"
 
 # Load data
 
-map_data <- read_rds("data_files/map_data2021-02-15.rds")
-county_map_data <- read_rds("data_files/county_map_data2021-02-15.rds")
+map_data <- read_rds("data_files/map_data2021-02-16.rds")
+county_map_data <- read_rds("data_files/county_map_data2021-02-16.rds")
 
-chart_data <- read_rds("data_files/case_chart_data2021-02-15.rds")
-vax_chart_data <- read_rds("data_files/vax_chart_data2021-02-15.rds")
+chart_data <- read_rds("data_files/case_chart_data2021-02-16.rds")
+vax_chart_data <- read_rds("data_files/vax_chart_data2021-02-16.rds")
 
-awesome <- read_rds("data_files/awesome2021-02-15.rds")
-cool <- read_rds("data_files/cool2021-02-15.rds")
+awesome <- read_rds("data_files/awesome2021-02-16.rds")
+cool <- read_rds("data_files/cool2021-02-16.rds")
 
-hosp_figure <- read_rds("data_files/ctp2021-02-15.rds")
+hosp_figure <- read_rds("data_files/ctp2021-02-16.rds")
 
 geo <- read_rds("data_files/geo_data.rds")
 county_geo <- read_rds("data_files/county_geo_data.rds")
@@ -50,7 +50,6 @@ theme2 <- theme(plot.title = element_blank(),
                 legend.position = "right",
                 legend.key.width = unit(0.8, "cm"),
                 legend.key.height = unit(1.5, "cm"),
-            #    legend.direction = "horizontal",
                 legend.text = element_text(color = "white", size = 12, face = "bold"),
                 panel.grid.major = element_blank(), 
                 panel.grid.minor = element_blank(),
@@ -87,16 +86,21 @@ style2 <- scale_fill_gradientn(name = "", colors = c("#dde6fb", "#0b2358"))
 
 ui <- fluidPage(
     
+  
+    titlePanel(
+    windowTitle = "Mapping COVID-19 in the U.S.",
+    title = tags$head(tags$link(rel="icon", 
+                                href="icons/favicon2.ico", 
+                                type="image/x-icon")
+    )),
+  
     # Set background image to an image of COVID-19  
     
     setBackgroundImage(src = "coronavirus8.jpg"),
                  #      https://heller.brandeis.edu/lurie/images/stock-images/coronavirus.jpg
     
-    theme = bs_theme(version = 4, bootswatch = "minty"
-                #     , primary = "#f3969a", secondary = "#78c2ad"
-                 #    ,bg = "#fff", fg = "#0b2358", "#6cc3d5"
-                     ),
-    
+    theme = bs_theme(version = 4, bootswatch = "minty"),
+
     # Add title
     
     h2(strong("Mapping COVID-19 in the United States", 
@@ -228,7 +232,7 @@ ui <- fluidPage(
                             )
                             
                         )
-                         
+                        
                ),
                
                tabPanel(strong(" Hospitalizations "),

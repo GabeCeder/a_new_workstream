@@ -40,13 +40,13 @@ options(tigris_use_cache = TRUE)
 ```{r}
 # Change data save date
 
-end_date <- "2021-02-16"
+end_date <- "2021-02-17"
 
-hhs_icu_occupancy <- "~/Desktop/Projects/basic_operations/data/estimated_icu_20210215_1557.csv"
+hhs_icu_occupancy <- "~/Desktop/Projects/a_new_workstream/analysis_app/data_files/estimated_icu_20210216_1603.csv"
 
 hhs_hosp_level <- "~/Desktop/Projects/basic_operations/data/reported_hospital_capacity_admissions_facility_level_weekly_average_timeseries_20210214.csv"
 
-hospitalizations <- "analysis_app/data_files/all-states-history (5).csv"
+# hospitalizations <- "analysis_app/data_files/all-states-history (5).csv"
 ```
 
 ```{r}
@@ -438,7 +438,7 @@ cool <- map2 %>%
   theme_void() +
    labs(title = "")
 
-ggplotly(cool)
+#ggplotly(cool)
 
 saveRDS(hosp_delta_test, file = paste("analysis_app/data_files/cool", end_date, ".rds", sep = ""))
 
@@ -526,7 +526,35 @@ saveRDS(hosp, file = paste("analysis_app/data_files/awesome", end_date, ".rds", 
 
 ```{r}
 
-ctp <- read_csv(hospitalizations) %>% 
+# ctp <- read_csv(hospitalizations) %>% 
+#   select(date, 
+#          "abbreviation" = state,
+#          "hosp" = hospitalizedCurrently) %>% 
+#   left_join(abbrev, by = "abbreviation") %>% 
+#   group_by(date) %>% 
+#   filter(!is.na(hosp)) %>% 
+#   summarize(hosp = sum(hosp)) %>% 
+#   mutate(hosp_7day_avg =  rollapply(hosp, 7, mean, fill = NA, align = 'right'))
+# 
+# hosp_stat <- ctp %>% 
+#   slice_max(order_by = date) %>% 
+#   summarize(thousands = hosp / 1000) %>% 
+#   pull(thousands) %>% 
+#   round(1)
+# 
+# saveRDS(ctp, file = paste("analysis_app/data_files/ctp", end_date, ".rds", sep = ""))
+
+
+```
+
+
+```{r}
+
+api <- getURL("https://api.covidtracking.com/v1/states/daily.csv")
+api2 <- read_csv(api)
+
+api2$date <- as.Date(as.character(api2$date), "%Y%m%d")
+ctp <- api2 %>% 
   select(date, 
          "abbreviation" = state,
          "hosp" = hospitalizedCurrently) %>% 
@@ -543,10 +571,7 @@ hosp_stat <- ctp %>%
   round(1)
 
 saveRDS(ctp, file = paste("analysis_app/data_files/ctp", end_date, ".rds", sep = ""))
-
-
 ```
-
 
 ```{r}
 

@@ -1,38 +1,31 @@
 # Welcome to my code for this Shiny App
 
-# Loading the necessary libraries
+# Loading the necessary packages
 
 library(shiny)
-library(readr)
-library(janitor)
-library(ggthemes)
-library(viridis)  
-library(gganimate)
 library(shinythemes)
 library(shinyWidgets)
 library(tidycensus)
-library(plotly)
 library(bslib)
 library(tidyverse)
 library(scales)
 
-
 # Set date
 
-end_date <- "Feb. 16, 2021"
+end_date <- "Feb. 17, 2021"
 
 # Load data
 
-map_data <- read_rds("data_files/map_data2021-02-16.rds")
-county_map_data <- read_rds("data_files/county_map_data2021-02-16.rds")
+map_data <- read_rds("data_files/map_data2021-02-17.rds")
+county_map_data <- read_rds("data_files/county_map_data2021-02-17.rds")
 
-chart_data <- read_rds("data_files/case_chart_data2021-02-16.rds")
-vax_chart_data <- read_rds("data_files/vax_chart_data2021-02-16.rds")
+chart_data <- read_rds("data_files/case_chart_data2021-02-17.rds")
+vax_chart_data <- read_rds("data_files/vax_chart_data2021-02-17.rds")
 
-awesome <- read_rds("data_files/awesome2021-02-16.rds")
-cool <- read_rds("data_files/cool2021-02-16.rds")
+awesome <- read_rds("data_files/awesome2021-02-17.rds")
+cool <- read_rds("data_files/cool2021-02-17.rds")
 
-hosp_figure <- read_rds("data_files/ctp2021-02-16.rds")
+hosp_figure <- read_rds("data_files/ctp2021-02-17.rds")
 
 geo <- read_rds("data_files/geo_data.rds")
 county_geo <- read_rds("data_files/county_geo_data.rds")
@@ -44,6 +37,8 @@ Sys.getenv("CENSUS_API_KEY")
 # Turn off scientific notation
 
 options(scipen = 999)
+
+# Set themes and styles
 
 theme2 <- theme(plot.title = element_blank(),
                 legend.title = element_blank(),
@@ -74,18 +69,11 @@ theme3 <- theme(plot.title = element_text(color = "white", face = "bold", hjust 
 
 style2 <- scale_fill_gradientn(name = "", colors = c("#dde6fb", "#0b2358"))
 
-# Images for use later
-#                        https://phil.cdc.gov//PHIL_Images/23354/23354_lores.jpg
-# https://techcrunch.com/wp-content/uploads/2020/03/GettyImages-1209679043.jpg
-
-
-    # bs_theme(version = 4, bootswatch = "minty") %>%
-    #     bs_theme_preview()
-
 # Define UI for the application
 
 ui <- fluidPage(
-    
+  
+    #Set up favicon and window title  
   
     titlePanel(
     windowTitle = "Mapping COVID-19 in the U.S.",
@@ -138,7 +126,7 @@ ui <- fluidPage(
                                                        "Deaths" = "deaths",
                                                        "Vaccines Administered" = "vax"),
                                            multiple = FALSE,
-                                           selected = "Cases"),
+                                           selected = "cases"),
 
                                selectInput(inputId = "select_time",
                                            label = "",
@@ -146,42 +134,31 @@ ui <- fluidPage(
                                                        "% Change Compared to 7 Days Ago" = "WoW",
                                                        "Cumulative All-Time Total" = "cumulative"),
                                            multiple = FALSE,
-                                           selected = "Current Daily Level (7-Day Avg)"),
+                                           selected = "today"),
 
                                selectInput(inputId = "select_cut",
                                            label = "",
                                            choices = c("Per 100K People" = "pc",
                                                        "Raw Total" = "raw"),
                                            multiple = FALSE,
-                                           selected = "Per 100K People")
+                                           selected = "pc")
                                ),
                         
                         column(width = 1),
                         
                         column(width = 8, 
-                               plotOutput("state_map", 
-                                          width = "100%"
-                                 #         , height = "100%"
-                                          ),
-                               #            plotlyOutput("state_map", width = 1000, height = 550)
+                               plotOutput("state_map", width = "100%"),
                                
+                               plotOutput("bottom_chart", width = "100%")
+                              )
                                
-                               plotOutput("bottom_chart"
-                                          , width = "100%"
-                                          #     , height = 400
-                               )
-                               #       plotlyOutput("bottom_chart", width = 1000, height = 400)
-                               
-                        )
-                               
-                               )
+                          )
             
                ),
                
                tabPanel(strong(" County-Level Maps "),
                         
                         fluidRow(
-                            
                             
                             column(width = 3,
                                    
@@ -191,10 +168,10 @@ ui <- fluidPage(
                                                 style = "color:#0b2358", 
                                                 align = "left"), 
                                              style = "background-color:white;"),
+                                   
                                    br(),
                                    
                                    img(src = "https://tristatesound.com/wp-content/uploads/2014/12/867-arrow-pointing-down-inside-a-circle-outline-icon.png",
-                                       #       https://icon-library.com/images/white-down-arrow-icon/white-down-arrow-icon-11.jpg", 
                                        height = 100, width = 100, align = "center", style="display: block; margin-left: auto; margin-right: auto;"),
 
                                    selectInput(inputId = "select_view2",
@@ -217,18 +194,15 @@ ui <- fluidPage(
                                                choices = c("Per 100K People" = "pc",
                                                            "Raw Total" = "raw"),
                                                multiple = FALSE,
-                                               selected = "Per 100K People")
+                                               selected = "pc")
                             ),
                             
                             column(width = 1),
                             
                             column(width = 8, 
-                                   plotOutput("county_map", width = "100%"
-                                              #, height = 600
-                                              ),
-                                   plotOutput("bottom_chart2", width = "100%"
-                                              #    , height = 400
-                                   )
+                                   plotOutput("county_map", width = "100%"),
+                                   
+                                   plotOutput("bottom_chart2", width = "100%")
                             )
                             
                         )
@@ -247,10 +221,10 @@ ui <- fluidPage(
                                                 style = "color:#0b2358", 
                                                 align = "left"), 
                                              style = "background-color:white;"),
+                                   
                                    br(),
                                    
                                    img(src = "https://tristatesound.com/wp-content/uploads/2014/12/867-arrow-pointing-down-inside-a-circle-outline-icon.png",
-                                       #       https://icon-library.com/images/white-down-arrow-icon/white-down-arrow-icon-11.jpg", 
                                        height = 100, width = 100, align = "center", style="display: block; margin-left: auto; margin-right: auto;"),
 
                                    selectInput(inputId = "select_view3",
@@ -258,11 +232,11 @@ ui <- fluidPage(
                                               choices = c("State Level (% ICU beds occupied)" = "state",
                                                           "County Level (% IP beds occupied)" = "county"),
                                               multiple = FALSE,
-                                              selected = "State Level"),
+                                              selected = "state"),
                                    
                                    selectInput(inputId = "select_time5",
                                                label = "",
-                                               choices = c("Current Level (updated weekly)" = "current"),
+                                               choices = c("Current Level" = "current"),
                                                multiple = FALSE,
                                                selected = "current")
                                    
@@ -274,7 +248,7 @@ ui <- fluidPage(
                                    plotOutput("hosp", width = "100%"),
                                    
                                    plotOutput("hosp_chart", width = "100%")
-                                   )
+                                  )
                             )
                        
                ),
@@ -282,11 +256,11 @@ ui <- fluidPage(
                tabPanel(strong(" About the Data "),
                         
                         fluidRow(
+                          
                             column(1),
                             
                             column(3,
-                                   
-                                   
+
                                        wellPanel(
                                            h2(strong("These are the data sources used in this analysis:"), align = "center", 
                                               style = "color:#0b2358"), 
@@ -364,9 +338,7 @@ ui <- fluidPage(
                         
                         fluidRow(
                             
-                            column(1, 
-                                   h1("")
-                            ),
+                            column(1),
                             
                             column(3,
                                    
@@ -401,7 +373,7 @@ ui <- fluidPage(
                                    )
                             )
                         )
-               )
+                    )
                ),
                
     
@@ -413,13 +385,10 @@ ui <- fluidPage(
     h6("Compiled by Gabe Cederberg", style = "color:white", align = "center")
 )
 
-# Define server logic required to draw a histogram
+# Set up server logic
 server <- function(input, output) {
 
     output$state_map <- renderPlot ({
-  #  output$state_map <- renderPlotly ({
-            
-        # Require that an input is put in place
 
         req(input$select_view,
             input$select_time,
@@ -432,19 +401,13 @@ server <- function(input, output) {
 
             mapping <- geo %>% right_join(gem, by = "state")
 
-            map1 <- ggplot(data = mapping, aes(fill = per_100K_number,
-                                     geometry = state_geometry,
-                                     text = paste(state, "<br>",
-                                                  "Value:", viz_per_100K_number, "<br>"))) +
+            ggplot(data = mapping, aes(fill = per_100K_number,
+                                     geometry = state_geometry)) +
                 geom_sf(color = alpha("white", 1 / 2), size = 0.1) +
                 geom_sf(data = mapping, fill = NA, color = "white") +
                 theme_void() +
                 theme2 +
                 style2
-            
-            map1
-         #   ggplotly(map1, tooltip = "text")
-
         }
 
          else {
@@ -454,7 +417,7 @@ server <- function(input, output) {
 
              mapping <- geo %>% right_join(gem, by = "state")
 
-             map2 <- ggplot(data = mapping, aes(fill = number,
+             ggplot(data = mapping, aes(fill = number,
                                                           geometry = state_geometry,
                                                           text = paste(state, "<br>",
                                                                        "Value:", viz_number, "<br>"))) +
@@ -463,21 +426,12 @@ server <- function(input, output) {
                  theme_void() +
                  theme2 +
                  style2
-
-             map2
-             
-      #       ggplotly(map2, tooltip = "text")
-
          }
 
-    }
-  , bg="transparent"
-  )
+    }, bg="transparent")
     
-    
+  
     output$county_map <- renderPlot ({
-        
-        # Require that an input is put in place
         
         req(input$select_view2,
             input$select_time2,
@@ -490,16 +444,13 @@ server <- function(input, output) {
 
             mapping <- county_geo %>% right_join(gem, by = "fips")
             
-            map3 <- ggplot() +
+            ggplot() +
                geom_sf(data = mapping, aes(fill = per_100K_number,
                                                          geometry = geometry), color = alpha("white", 1 / 2), size = 0.1) +
                geom_sf(data = geo, aes(geometry = state_geometry), fill = NA, color = "white") +
                theme_void() +
                theme2 +
                style2
-        
-            map3
-            
          }
 
          else {
@@ -509,22 +460,20 @@ server <- function(input, output) {
              
              mapping <- county_geo %>% right_join(gem, by = "fips")
              
-             map3 <- ggplot() +
+             ggplot() +
                  geom_sf(data = mapping, aes(fill = number,
                                              geometry = geometry), color = alpha("white", 1 / 2), size = 0.1) +
                  geom_sf(data = geo, aes(geometry = state_geometry), fill = NA, color = "white") +
                  theme_void() +
                  theme2 +
                  style2
-             
-             map3
          }
         
     }, bg="transparent") 
     
+    
     output$bottom_chart <- renderPlot ({
-#    output$bottom_chart <- renderPlotly ({
-        
+
         req(input$select_view)
         
         if (input$select_view == "vax") {
@@ -536,7 +485,7 @@ server <- function(input, output) {
                 pull(millions) %>% 
                 round(2)
             
-            chart <- vax_chart_data %>% filter(slice1 == "vax") %>% 
+            vax_chart_data %>% filter(slice1 == "vax") %>% 
                 ggplot() +
                 geom_line(aes(x = date, 
                               y = today_seven_day_avg_doses_adm / 1000000),
@@ -554,9 +503,6 @@ server <- function(input, output) {
                 labs(x = "", y = "Vaccine Doses Administered (millions) \n ",
                      title = paste("In the past week, the United States \n averaged ", avg_daily_stat, " million vaccinations per day.", sep = "")) +
                 theme3
-            
-            chart
-        #    ggplotly(chart, tooltip = "text")
         }
         
         else {
@@ -571,7 +517,7 @@ server <- function(input, output) {
                 
                 avg_daily_stat <- comma(avg_daily_stat)
                 
-                chart <- chart_data %>% filter(slice1 == "cases") %>% 
+                chart_data %>% filter(slice1 == "cases") %>% 
                     ggplot() +
                     geom_line(aes(x = date, 
                                   y = avg_number / 1000), 
@@ -590,9 +536,6 @@ server <- function(input, output) {
                          title = paste("In the past week, the United States \n averaged ", 
                                        avg_daily_stat, " cases per day.", sep = "")) +
                     theme3
-                
-                chart
-          #      ggplotly(chart, tooltip = "text")          
          }
             
             else {
@@ -605,7 +548,7 @@ server <- function(input, output) {
                 
                 avg_daily_stat <- comma(avg_daily_stat)
                 
-                chart <- chart_data %>% filter(slice1 == "deaths") %>% 
+                chart_data %>% filter(slice1 == "deaths") %>% 
                     ggplot() +
                     geom_line(aes(x = date, y = avg_number / 1000), color = "white") +
                     geom_col(aes(x = date, y = daily_number / 1000,
@@ -619,16 +562,11 @@ server <- function(input, output) {
                          title = paste("In the past week, the United States \n averaged ", 
                                        avg_daily_stat, " deaths per day.", sep = "")) +
                     theme3
-                  
-                chart  
-        #        ggplotly(chart, tooltip = "text")
-                
             }
         }
         
-    }
-, bg="transparent"
-)
+    }, bg="transparent")
+    
     
     output$bottom_chart2 <- renderPlot ({
         
@@ -644,7 +582,7 @@ server <- function(input, output) {
             
             avg_daily_stat <- comma(avg_daily_stat)
             
-            chart <- chart_data %>% filter(slice1 == "cases") %>% 
+            chart_data %>% filter(slice1 == "cases") %>% 
                 ggplot() +
                 geom_line(aes(x = date, 
                               y = avg_number / 1000), 
@@ -663,9 +601,6 @@ server <- function(input, output) {
                      title = paste("In the past week, the United States \n averaged ", 
                                    avg_daily_stat, " cases per day.", sep = "")) +
                 theme3
-            
-            chart
-       #     ggplotly(chart, tooltip = "text")          
         }
         
         else {
@@ -678,7 +613,7 @@ server <- function(input, output) {
             
             avg_daily_stat <- comma(avg_daily_stat)
             
-            chart <- chart_data %>% filter(slice1 == "deaths") %>% 
+            chart_data %>% filter(slice1 == "deaths") %>% 
                 ggplot() +
                 geom_line(aes(x = date, y = avg_number / 1000), color = "white") +
                 geom_col(aes(x = date, y = daily_number / 1000,
@@ -692,16 +627,9 @@ server <- function(input, output) {
                      title = paste("In the past week, the United States \n averaged ", 
                                    avg_daily_stat, " deaths per day.", sep = "")) +
                 theme3
-            
-            chart
-            
-     #       ggplotly(chart, tooltip = "text")
-            
         }
         
-    }
-    , bg="transparent"
-    )
+    }, bg="transparent")
     
     
     output$hosp <- renderPlot ({
@@ -710,7 +638,7 @@ server <- function(input, output) {
             iii <- geo %>% 
                 right_join(cool, by = "state")
             
-            b <- iii %>% 
+            iii %>% 
                 ggplot() +
                 geom_sf(aes(fill = pct_ICU_bed_occupied), color = alpha("white", 1 / 2), size = 0.1) +
                 geom_sf(data = geo, fill = NA, color = "white") +
@@ -718,9 +646,6 @@ server <- function(input, output) {
                 labs(title = "") +
                 theme2 +
                 style2
-            
-            b
-
         }
         
         else {
@@ -728,7 +653,7 @@ server <- function(input, output) {
             hhh <- county_geo %>%
                 right_join(awesome, by = c("state", "county"))
             
-            a <- hhh %>%
+            hhh %>%
                 ggplot() +
                 geom_sf(data = county_geo, fill = "dark grey", size = 0.1) +
                 
@@ -738,8 +663,6 @@ server <- function(input, output) {
                 theme_void() +
                 theme2 +
                 style2
-            a
-            
         }
         
         
@@ -750,13 +673,12 @@ server <- function(input, output) {
         
         hosp_stat <- hosp_figure %>% 
             slice_max(order_by = date) %>% 
-         #   summarize(thousands = hosp / 1000) %>% 
             pull(hosp) %>% 
             round(1)
         
         hosp_stat <- comma(hosp_stat)
         
-        chart <- hosp_figure %>% 
+        hosp_figure %>% 
             ggplot() +
             geom_line(aes(x = date, y = hosp / 1000), color = "white") +
             geom_col(aes(x = date, y = hosp / 1000,
@@ -769,11 +691,7 @@ server <- function(input, output) {
             labs(y = "COVID-19 Hospitalizations (thousands)\n ",
                  title = paste("On ", end_date, ", ", hosp_stat, " people were hospitalized \n with COVID-19 in the United States.", sep = "")) +
             theme3
-        
-        chart
-    }
-    , bg="transparent"
-    )
+    }, bg="transparent")
     
 }
 

@@ -417,10 +417,8 @@ server <- function(input, output) {
 
              mapping <- geo %>% right_join(gem, by = "state")
 
-             ggplot(data = mapping, aes(fill = number,
-                                                          geometry = state_geometry,
-                                                          text = paste(state, "<br>",
-                                                                       "Value:", viz_number, "<br>"))) +
+             ggplot(data = mapping, aes(fill = number, 
+                                        geometry = state_geometry)) +
                  geom_sf(color = alpha("white", 1 / 2), size = 0.1) +
                  geom_sf(data = mapping, fill = NA, color = "white") +
                  theme_void() +
@@ -446,7 +444,8 @@ server <- function(input, output) {
             
             ggplot() +
                geom_sf(data = mapping, aes(fill = per_100K_number,
-                                                         geometry = geometry), color = alpha("white", 1 / 2), size = 0.1) +
+                                                         geometry = geometry), 
+                       color = alpha("white", 1 / 2), size = 0.1) +
                geom_sf(data = geo, aes(geometry = state_geometry), fill = NA, color = "white") +
                theme_void() +
                theme2 +
@@ -462,7 +461,8 @@ server <- function(input, output) {
              
              ggplot() +
                  geom_sf(data = mapping, aes(fill = number,
-                                             geometry = geometry), color = alpha("white", 1 / 2), size = 0.1) +
+                                             geometry = geometry), 
+                         color = alpha("white", 1 / 2), size = 0.1) +
                  geom_sf(data = geo, aes(geometry = state_geometry), fill = NA, color = "white") +
                  theme_void() +
                  theme2 +
@@ -491,9 +491,7 @@ server <- function(input, output) {
                               y = today_seven_day_avg_doses_adm / 1000000),
                           color = "white") +
                 geom_col(aes(x = date,
-                             y = new_doses / 1000000,
-                             text = paste("Date: ", date, "<br>",
-                                          round(new_doses / 1000000, 2), "M vaccinations reported by CDC", "<br>")),
+                             y = new_doses / 1000000),
                          fill = "white",
                          color = NA,
                          alpha = 0.6) +
@@ -523,9 +521,7 @@ server <- function(input, output) {
                                   y = avg_number / 1000), 
                               color = "white") +
                     geom_col(aes(x = date, 
-                                 y = daily_number / 1000,
-                                 text = paste("Date: ", date, "<br>",
-                                              round(daily_number), " cases reported", "<br>")), 
+                                 y = daily_number / 1000), 
                              color = NA, 
                              fill = "white", 
                              alpha = 0.4) +
@@ -551,9 +547,7 @@ server <- function(input, output) {
                 chart_data %>% filter(slice1 == "deaths") %>% 
                     ggplot() +
                     geom_line(aes(x = date, y = avg_number / 1000), color = "white") +
-                    geom_col(aes(x = date, y = daily_number / 1000,
-                                 text = paste("Date: ", date, "<br>",
-                                              round(daily_number), " deaths reported", "<br>")), 
+                    geom_col(aes(x = date, y = daily_number / 1000), 
                              color = NA, fill = "white", alpha = 0.4) +
                     scale_x_date(date_labels = "%B", 
                                  date_breaks = "months", 
@@ -588,9 +582,7 @@ server <- function(input, output) {
                               y = avg_number / 1000), 
                           color = "white") +
                 geom_col(aes(x = date, 
-                             y = daily_number / 1000,
-                             text = paste("Date: ", date, "<br>",
-                                          round(daily_number), " cases reported", "<br>")), 
+                             y = daily_number / 1000), 
                          color = NA, 
                          fill = "white", 
                          alpha = 0.4) +
@@ -616,9 +608,7 @@ server <- function(input, output) {
             chart_data %>% filter(slice1 == "deaths") %>% 
                 ggplot() +
                 geom_line(aes(x = date, y = avg_number / 1000), color = "white") +
-                geom_col(aes(x = date, y = daily_number / 1000,
-                             text = paste("Date: ", date, "<br>",
-                                          round(daily_number), " deaths reported", "<br>")), 
+                geom_col(aes(x = date, y = daily_number / 1000), 
                          color = NA, fill = "white", alpha = 0.4) +
                 scale_x_date(date_labels = "%B", 
                              date_breaks = "months", 
@@ -681,9 +671,7 @@ server <- function(input, output) {
         hosp_figure %>% 
             ggplot() +
             geom_line(aes(x = date, y = hosp / 1000), color = "white") +
-            geom_col(aes(x = date, y = hosp / 1000,
-                         text = paste("Date: ", date, "<br>",
-                                      round(hosp), " COVID-19 Hospitalizations", "<br>")), 
+            geom_col(aes(x = date, y = hosp / 1000), 
                      color = NA, fill = "white", alpha = 0.4) +
             scale_x_date(date_labels = "%B", 
                          date_breaks = "months", 

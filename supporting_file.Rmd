@@ -40,9 +40,9 @@ options(tigris_use_cache = TRUE)
 ```{r}
 # Change data save date
 
-end_date <- "2021-02-17"
+end_date <- "2021-02-20"
 
-hhs_icu_occupancy <- "~/Desktop/Projects/a_new_workstream/analysis_app/data_files/estimated_icu_20210216_1603.csv"
+hhs_icu_occupancy <- "~/Desktop/Projects/a_new_workstream/analysis_app/data_files/estimated_icu_20210217_2240.csv"
 
 hhs_hosp_level <- "~/Desktop/Projects/basic_operations/data/reported_hospital_capacity_admissions_facility_level_weekly_average_timeseries_20210214.csv"
 
@@ -191,7 +191,13 @@ d <- c %>%
   mutate(viz_number = case_when(slice2 == "WoW" & number > 0 ~ paste("+", viz_number, sep = ""),
                                 slice2 != "WoW" | number <= 0 ~ viz_number),
          viz_per_100K_number = case_when(slice2 == "WoW" & per_100K_number > 0 ~ paste("+", viz_per_100K_number, sep = ""),
-                                         slice2 != "Wow" | per_100K_number <= 0 ~ viz_per_100K_number))
+                                         slice2 != "Wow" | per_100K_number <= 0 ~ viz_per_100K_number)) %>% 
+  mutate(label1 = case_when(slice1 == "cases" ~ "Cases",
+                            slice1 == "deaths" ~ "Deaths",
+                            slice1 == "vax" ~ "Vaccine Doses"),
+         label2 = case_when(slice2 == "today" ~ "Current Daily Level",
+                            slice2 == "WoW" ~ "% Change Since \nLast Week",
+                            slice2 == "cumulative" ~ "Cumulative Total"))
 ```
 
 ```{r}
@@ -265,7 +271,13 @@ hh <- gg %>%
   mutate(viz_number = case_when(slice2 == "WoW" & number > 0 ~ paste("+", viz_number, sep = ""),
                                 slice2 != "WoW" | number <= 0 ~ viz_number),
          viz_per_100K_number = case_when(slice2 == "WoW" & per_100K_number > 0 ~ paste("+", viz_per_100K_number, sep = ""),
-                                         slice2 != "Wow" | per_100K_number <= 0 ~ viz_per_100K_number))
+                                         slice2 != "Wow" | per_100K_number <= 0 ~ viz_per_100K_number)) %>% 
+  mutate(label1 = case_when(slice1 == "cases" ~ "Cases",
+                            slice1 == "deaths" ~ "Deaths",
+                            slice1 == "vax" ~ "Vaccine Doses"),
+         label2 = case_when(slice2 == "today" ~ "Current Daily Level",
+                            slice2 == "WoW" ~ "% Change Since \nLast Week",
+                            slice2 == "cumulative" ~ "Cumulative Total"))
 
 ```
 

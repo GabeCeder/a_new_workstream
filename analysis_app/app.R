@@ -12,20 +12,20 @@ library(scales)
 
 # Set date
 
-end_date <- "Feb. 17, 2021"
+end_date <- "Feb. 20, 2021"
 
 # Load data
 
-map_data <- read_rds("data_files/map_data2021-02-17.rds")
-county_map_data <- read_rds("data_files/county_map_data2021-02-17.rds")
+map_data <- read_rds("data_files/map_data2021-02-20.rds")
+county_map_data <- read_rds("data_files/county_map_data2021-02-20.rds")
 
-chart_data <- read_rds("data_files/case_chart_data2021-02-17.rds")
-vax_chart_data <- read_rds("data_files/vax_chart_data2021-02-17.rds")
+chart_data <- read_rds("data_files/case_chart_data2021-02-20.rds")
+vax_chart_data <- read_rds("data_files/vax_chart_data2021-02-20.rds")
 
-awesome <- read_rds("data_files/awesome2021-02-17.rds")
-cool <- read_rds("data_files/cool2021-02-17.rds")
+awesome <- read_rds("data_files/awesome2021-02-20.rds")
+cool <- read_rds("data_files/cool2021-02-20.rds")
 
-hosp_figure <- read_rds("data_files/ctp2021-02-17.rds")
+hosp_figure <- read_rds("data_files/ctp2021-02-20.rds")
 
 geo <- read_rds("data_files/geo_data.rds")
 county_geo <- read_rds("data_files/county_geo_data.rds")
@@ -407,7 +407,9 @@ server <- function(input, output) {
                 geom_sf(data = mapping, fill = NA, color = "white") +
                 theme_void() +
                 theme2 +
-                style2
+              scale_fill_gradientn(name = paste(mapping$label1, "\n", mapping$label2, "\n", "Per 100K", sep = " "), 
+                                   colors = c("#dde6fb", "#0b2358")) +
+              theme(legend.title = element_text(color = "white", size = 10, face = "bold"))
         }
 
          else {
@@ -423,8 +425,10 @@ server <- function(input, output) {
                  geom_sf(data = mapping, fill = NA, color = "white") +
                  theme_void() +
                  theme2 +
-                 style2
-         }
+               scale_fill_gradientn(name = paste(mapping$label1, "\n", mapping$label2, "\n", "Raw Total", sep = " "), 
+                                    colors = c("#dde6fb", "#0b2358")) +
+               theme(legend.title = element_text(color = "white", size = 10, face = "bold"))
+             }
 
     }, bg="transparent")
     
@@ -449,8 +453,10 @@ server <- function(input, output) {
                geom_sf(data = geo, aes(geometry = state_geometry), fill = NA, color = "white") +
                theme_void() +
                theme2 +
-               style2
-         }
+              scale_fill_gradientn(name = paste(mapping$label1, "\n", mapping$label2, "\n", "per 100K", sep = " "), 
+                                   colors = c("#dde6fb", "#0b2358")) +
+              theme(legend.title = element_text(color = "white", size = 10, face = "bold"))
+            }
 
          else {
              gem <- county_map_data %>%
@@ -466,8 +472,10 @@ server <- function(input, output) {
                  geom_sf(data = geo, aes(geometry = state_geometry), fill = NA, color = "white") +
                  theme_void() +
                  theme2 +
-                 style2
-         }
+               scale_fill_gradientn(name = paste(mapping$label1, "\n", mapping$label2, "\n", "per 100K", sep = " "), 
+                                    colors = c("#dde6fb", "#0b2358")) +
+               theme(legend.title = element_text(color = "white", size = 10, face = "bold"))
+             }
         
     }, bg="transparent") 
     
@@ -635,8 +643,10 @@ server <- function(input, output) {
                 theme_void() +
                 labs(title = "") +
                 theme2 +
-                style2
-        }
+              scale_fill_gradientn(name = "% of ICU Beds \nOccupied", 
+                                   colors = c("#dde6fb", "#0b2358")) +
+              theme(legend.title = element_text(color = "white", size = 10, face = "bold"))
+            }
         
         else {
 
@@ -652,8 +662,10 @@ server <- function(input, output) {
                 labs(caption = "Shading indicates average of all reporting hospitals in the county") +
                 theme_void() +
                 theme2 +
-                style2
-        }
+              scale_fill_gradientn(name = "% of IP Beds \nOccupied", 
+                                   colors = c("#dde6fb", "#0b2358")) +
+              theme(legend.title = element_text(color = "white", size = 10, face = "bold"))
+            }
         
         
     }, bg="transparent")

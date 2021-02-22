@@ -40,11 +40,11 @@ options(tigris_use_cache = TRUE)
 ```{r}
 # Change data save date
 
-end_date <- "2021-02-21"
+end_date <- "2021-02-22"
 
-hhs_icu_occupancy <- "~/Desktop/Projects/a_new_workstream/analysis_app/data_files/estimated_icu_20210221_0017.csv"
+hhs_icu_occupancy <- "~/Desktop/Projects/a_new_workstream/analysis_app/data_files/estimated_icu_20210221_1631.csv"
 
-hhs_hosp_level <- "~/Desktop/Projects/basic_operations/data/reported_hospital_capacity_admissions_facility_level_weekly_average_timeseries_20210214.csv"
+hhs_hosp_level <- "~/Desktop/Projects/basic_operations/data/reported_hospital_capacity_admissions_facility_level_weekly_average_timeseries_20210221.csv"
 
 # hospitalizations <- "analysis_app/data_files/all-states-history (5).csv"
 ```
@@ -380,7 +380,7 @@ vaccines2 <- read_csv(vaccines_text) %>%
   clean_names() %>% 
   select(date,
          "state" = long_name,
-         "new_doses" = doses_distributed_daily,
+         "new_doses" = doses_administered_daily,
         # "cumulative_doses_administered" = doses_administered,
          "today_seven_day_avg_doses_adm" = doses_administered_daily_7day_avg) %>% 
   filter(!(state %in% c("Bureau of Prisons",

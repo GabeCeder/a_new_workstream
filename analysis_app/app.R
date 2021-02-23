@@ -12,20 +12,20 @@ library(scales)
 
 # Set date
 
-end_date <- "Feb. 22, 2021"
+end_date <- "Feb. 23, 2021"
 
 # Load data
 
-map_data <- read_rds("data_files/map_data2021-02-22.rds")
-county_map_data <- read_rds("data_files/county_map_data2021-02-22.rds")
+map_data <- read_rds("data_files/map_data2021-02-23.rds")
+county_map_data <- read_rds("data_files/county_map_data2021-02-23.rds")
 
-chart_data <- read_rds("data_files/case_chart_data2021-02-22.rds")
-vax_chart_data <- read_rds("data_files/vax_chart_data2021-02-22.rds")
+chart_data <- read_rds("data_files/case_chart_data2021-02-23.rds")
+vax_chart_data <- read_rds("data_files/vax_chart_data2021-02-23.rds")
 
-awesome <- read_rds("data_files/awesome2021-02-22.rds")
-cool <- read_rds("data_files/cool2021-02-22.rds")
+awesome <- read_rds("data_files/awesome2021-02-23.rds")
+cool <- read_rds("data_files/cool2021-02-23.rds")
 
-hosp_figure <- read_rds("data_files/ctp2021-02-22.rds")
+hosp_figure <- read_rds("data_files/ctp2021-02-23.rds")
 
 geo <- read_rds("data_files/geo_data.rds")
 county_geo <- read_rds("data_files/county_geo_data.rds")
@@ -351,9 +351,13 @@ ui <- fluidPage(
                                    
                                    wellPanel(
                                        
-                                       h4(strong("Hi, I'm Gabe Cederberg. I'm currently on a gap year, and I'm a rising senior at Harvard studying 
-                                   Government with a secondary in Economics."), align = "center", style = "color:#d9d9d9"),
+                                       h4(strong("Hi, I'm Gabe Cederberg. I created this website to help visualize the day-to-day and week-to-week changes in the ongoing pandemic."), align = "center", style = "color:#d9d9d9"),
                                        
+                                       br(),
+                                       
+                                       h5(strong("I'm currently on a gap year, and I'm a rising senior at Harvard studying 
+                                   Government with a secondary in Economics."), align = "center", style = "color:#d9d9d9"),
+                                          
                                        br(),
                                        
                                        wellPanel(

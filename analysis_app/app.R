@@ -12,20 +12,20 @@ library(scales)
 
 # Set date
 
-end_date <- "Mar. 2, 2021"
+end_date <- "Mar. 3, 2021"
 
 # Load data
 
-map_data <- read_rds("data_files/map_data2021-03-02.rds")
-county_map_data <- read_rds("data_files/county_map_data2021-03-02.rds")
+map_data <- read_rds("data_files/map_data2021-03-03.rds")
+county_map_data <- read_rds("data_files/county_map_data2021-03-03.rds")
 
-chart_data <- read_rds("data_files/case_chart_data2021-03-02.rds")
-vax_chart_data <- read_rds("data_files/vax_chart_data2021-03-02.rds")
+chart_data <- read_rds("data_files/case_chart_data2021-03-03.rds")
+vax_chart_data <- read_rds("data_files/vax_chart_data2021-03-03.rds")
 
-awesome <- read_rds("data_files/awesome2021-03-02.rds")
-cool <- read_rds("data_files/cool2021-03-02.rds")
+awesome <- read_rds("data_files/awesome2021-03-03.rds")
+cool <- read_rds("data_files/cool2021-03-03.rds")
 
-hosp_figure <- read_rds("data_files/ctp2021-03-02.rds")
+hosp_figure <- read_rds("data_files/ctp2021-03-03.rds")
 
 geo <- read_rds("data_files/geo_data.rds")
 county_geo <- read_rds("data_files/county_geo_data.rds")

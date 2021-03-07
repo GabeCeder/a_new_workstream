@@ -12,20 +12,20 @@ library(scales)
 
 # Set date
 
-end_date <- "Mar. 4, 2021"
+end_date <- "Mar. 7, 2021"
 
 # Load data
 
-map_data <- read_rds("data_files/map_data2021-03-04.rds")
-county_map_data <- read_rds("data_files/county_map_data2021-03-04.rds")
+map_data <- read_rds("data_files/map_data2021-03-07.rds")
+county_map_data <- read_rds("data_files/county_map_data2021-03-07.rds")
 
-chart_data <- read_rds("data_files/case_chart_data2021-03-04.rds")
-vax_chart_data <- read_rds("data_files/vax_chart_data2021-03-04.rds")
+chart_data <- read_rds("data_files/case_chart_data2021-03-07.rds")
+vax_chart_data <- read_rds("data_files/vax_chart_data2021-03-07.rds")
 
-awesome <- read_rds("data_files/awesome2021-03-04.rds")
-cool <- read_rds("data_files/cool2021-03-04.rds")
+awesome <- read_rds("data_files/awesome2021-03-07.rds")
+cool <- read_rds("data_files/cool2021-03-07.rds")
 
-hosp_figure <- read_rds("data_files/ctp2021-03-04.rds")
+hosp_figure <- read_rds("data_files/ctp2021-03-07.rds")
 
 geo <- read_rds("data_files/geo_data.rds")
 county_geo <- read_rds("data_files/county_geo_data.rds")
@@ -283,10 +283,14 @@ ui <- fluidPage(
                                        img(src = "https://psabank.com/wp-content/uploads/2019/06/HHS-Seal-1600x900.png", width = "100%"),
                                        h4(strong("State-Level ICU Bed Occupancy and Hospital-Level Inpatient Hospital Bed Occupancy from the U.S. Department of Health and Human Services"), style = "color:#d9d9d9"),
                                        h5("These datasets can be found ",
-                                          a(href = "https://healthdata.gov/dataset/covid-19-estimated-patient-impact-and-hospital-capacity-state", "here", 
+                                          a(href = "https://beta.healthdata.gov/dataset/Estimated-ICU-Beds-Occupied-by-State-Timeseries/7ctx-gtb7",
+                                            #https://healthdata.gov/dataset/covid-19-estimated-patient-impact-and-hospital-capacity-state", 
+                                            "here", 
                                             .noWS = "outside"), 
                                           " and ",
-                                          a(href = "https://healthdata.gov/dataset/covid-19-reported-patient-impact-and-hospital-capacity-facility", "here", 
+                                          a(href = "https://beta.healthdata.gov/Hospital/COVID-19-Reported-Patient-Impact-and-Hospital-Capa/anag-cw7u",
+                                          # https://healthdata.gov/dataset/covid-19-reported-patient-impact-and-hospital-capacity-facility", 
+                                          "here", 
                                             .noWS = "outside"), .noWS = c("after-begin", "before-end"),
                                           ", respectively.", style = "color:#d9d9d9")
                                    ),

@@ -42,9 +42,9 @@ options(tigris_use_cache = TRUE)
 
 end_date <- "2021-03-07"
 
-hhs_icu_occupancy <- "~/Desktop/Projects/a_new_workstream/analysis_app/data_files/estimated_icu_20210303_2029.csv"
+hhs_icu_occupancy <- "~/Desktop/Projects/a_new_workstream/analysis_app/data_files/Estimated_ICU_Beds_Occupied_by_State_Timeseries.csv"
 
-hhs_hosp_level <- "~/Desktop/Projects/basic_operations/data/reported_hospital_capacity_admissions_facility_level_weekly_average_timeseries_20210228.csv"
+hhs_hosp_level <- "~/Desktop/Projects/a_new_workstream/analysis_app/data_files/COVID-19_Reported_Patient_Impact_and_Hospital_Capacity_by_Facility.csv"
 
 # hospitalizations <- "analysis_app/data_files/all-states-history (5).csv"
 ```

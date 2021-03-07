@@ -40,7 +40,7 @@ options(tigris_use_cache = TRUE)
 ```{r}
 # Change data save date
 
-end_date <- "2021-03-04"
+end_date <- "2021-03-07"
 
 hhs_icu_occupancy <- "~/Desktop/Projects/a_new_workstream/analysis_app/data_files/estimated_icu_20210303_2029.csv"
 

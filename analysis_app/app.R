@@ -12,20 +12,20 @@ library(scales)
 
 # Set date
 
-end_date <- "Mar. 7, 2021"
+end_date <- "Mar. 10, 2021"
 
 # Load data
 
-map_data <- read_rds("data_files/map_data2021-03-07.rds")
-county_map_data <- read_rds("data_files/county_map_data2021-03-07.rds")
+map_data <- read_rds("data_files/map_data2021-03-10.rds")
+county_map_data <- read_rds("data_files/county_map_data2021-03-10.rds")
 
-chart_data <- read_rds("data_files/case_chart_data2021-03-07.rds")
-vax_chart_data <- read_rds("data_files/vax_chart_data2021-03-07.rds")
+chart_data <- read_rds("data_files/case_chart_data2021-03-10.rds")
+vax_chart_data <- read_rds("data_files/vax_chart_data2021-03-10.rds")
 
-awesome <- read_rds("data_files/awesome2021-03-07.rds")
-cool <- read_rds("data_files/cool2021-03-07.rds")
+awesome <- read_rds("data_files/awesome2021-03-10.rds")
+cool <- read_rds("data_files/cool2021-03-10.rds")
 
-hosp_figure <- read_rds("data_files/ctp2021-03-07.rds")
+hosp_figure <- read_rds("data_files/ctp2021-03-10.rds")
 
 geo <- read_rds("data_files/geo_data.rds")
 county_geo <- read_rds("data_files/county_geo_data.rds")
@@ -126,7 +126,7 @@ ui <- fluidPage(
                                                        "Deaths" = "deaths",
                                                        "Vaccines Administered" = "vax"),
                                            multiple = FALSE,
-                                           selected = "cases"),
+                                           selected = "vax"),
 
                                selectInput(inputId = "select_time",
                                            label = "",
@@ -134,7 +134,7 @@ ui <- fluidPage(
                                                        "% Change Compared to 7 Days Ago" = "WoW",
                                                        "Cumulative All-Time Total" = "cumulative"),
                                            multiple = FALSE,
-                                           selected = "today"),
+                                           selected = "cumulative"),
 
                                selectInput(inputId = "select_cut",
                                            label = "",
@@ -246,6 +246,12 @@ ui <- fluidPage(
                             
                             column(width = 8,
                                    plotOutput("hosp", width = "100%"),
+                                   
+                                   wellPanel(
+                                     
+                                     h5(strong("Note: The COVID Tracking Project ended its data reporting on March 7th, so I'll be switching over to HHS data shortly."), 
+                                        align = "center", style = "color:#d9d9d9")
+                                   ),
                                    
                                    plotOutput("hosp_chart", width = "100%")
                                   )

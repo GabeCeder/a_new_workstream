@@ -12,20 +12,20 @@ library(scales)
 
 # Set date
 
-end_date <- "Mar. 10, 2021"
+end_date <- "Mar. 7, 2021"
 
 # Load data
 
-map_data <- read_rds("data_files/map_data2021-03-10.rds")
-county_map_data <- read_rds("data_files/county_map_data2021-03-10.rds")
+map_data <- read_rds("data_files/map_data2021-03-07.rds")
+county_map_data <- read_rds("data_files/county_map_data2021-03-07.rds")
 
-chart_data <- read_rds("data_files/case_chart_data2021-03-10.rds")
-vax_chart_data <- read_rds("data_files/vax_chart_data2021-03-10.rds")
+chart_data <- read_rds("data_files/case_chart_data2021-03-07.rds")
+vax_chart_data <- read_rds("data_files/vax_chart_data2021-03-07.rds")
 
-awesome <- read_rds("data_files/awesome2021-03-10.rds")
-cool <- read_rds("data_files/cool2021-03-10.rds")
+awesome <- read_rds("data_files/awesome2021-03-07.rds")
+cool <- read_rds("data_files/cool2021-03-07.rds")
 
-hosp_figure <- read_rds("data_files/ctp2021-03-10.rds")
+hosp_figure <- read_rds("data_files/ctp2021-03-07.rds")
 
 geo <- read_rds("data_files/geo_data.rds")
 county_geo <- read_rds("data_files/county_geo_data.rds")
@@ -247,11 +247,11 @@ ui <- fluidPage(
                             column(width = 8,
                                    plotOutput("hosp", width = "100%"),
                                    
-                                   wellPanel(
-                                     
-                                     h5(strong("Note: The COVID Tracking Project ended its data reporting on March 7th, so I'll be switching over to HHS data shortly."), 
-                                        align = "center", style = "color:#d9d9d9")
-                                   ),
+                                   # wellPanel(
+                                   #   
+                                   #   h5(strong("Note: The COVID Tracking Project ended its data reporting on March 7th, so I'll be switching over to HHS data shortly."), 
+                                   #      align = "center", style = "color:#d9d9d9")
+                                   # ),
                                    
                                    plotOutput("hosp_chart", width = "100%")
                                   )
@@ -361,7 +361,14 @@ ui <- fluidPage(
                                    
                                    wellPanel(
                                        
-                                       h4(strong("Hi, I'm Gabe Cederberg. I created this website to help visualize the day-to-day and week-to-week changes in the ongoing pandemic."), align = "center", style = "color:#d9d9d9"),
+                                       h4(strong("Hi, I'm Gabe Cederberg. I created this website to help visualize ongoing changes in the pandemic as the new Administration ramped up its data reporting operations."), align = "center", style = "color:#d9d9d9"),
+                                       
+                                       br(),
+                                       
+                                       h4("As of March 7th, I stoppped updating the data on this website. Current pandemic data can be found at the CDC COVID Data Tracker ", 
+                                                 a(href = "https://covid.cdc.gov/covid-data-tracker/#datatracker-home", "here",
+                                                   .noWS = "outside"), .noWS = c("after-begin", "before-end"), 
+                                                 ".", align = "center", style = "color:#d9d9d9"),
                                        
                                        br(),
                                        

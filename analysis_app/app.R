@@ -277,7 +277,8 @@ ui <- fluidPage(
                             column(4,
                                    
                                    wellPanel(
-                                       img(src = "https://18zu3o13q8pa3oob523tuov2-wpengine.netdna-ssl.com/wp-content/uploads/2020/01/the-new-york-times-logo-900x330-1.png", width = "100%"),
+                                       img(src = "http://sites.bu.edu/reinhartlab/files/2019/04/new-york-times-logo-large-e1439227085840.jpg", width = "100%"),
+                                  #           "https://18zu3o13q8pa3oob523tuov2-wpengine.netdna-ssl.com/wp-content/uploads/2020/01/the-new-york-times-logo-900x330-1.png"
                                        h4(strong("Daily COVID-19 Case and Death Totals from The New York Times"), style = "color:#d9d9d9"),
                                        h5("These datasets can be found ",
                                           a(href = "https://github.com/nytimes/covid-19-data", "here", 

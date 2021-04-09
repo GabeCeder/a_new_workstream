@@ -362,11 +362,11 @@ ui <- fluidPage(
                                    
                                    wellPanel(
                                        
-                                       h4(strong("Hi, I'm Gabe Cederberg. I created this website to help visualize ongoing changes in the pandemic as the new Administration ramped up its data reporting operations."), align = "center", style = "color:#d9d9d9"),
+                                       h4(strong("Hi, I'm Gabe Cederberg. I created this website to help visualize changes in the pandemic as the new Administration ramped up its data reporting operations."), align = "center", style = "color:#d9d9d9"),
                                        
                                        br(),
                                        
-                                       h4("As of March 7th, I stoppped updating the data on this website. Current pandemic data can be found at the CDC COVID Data Tracker ", 
+                                       h4("As of March 7th, I stopped updating the data on this website. Current pandemic data can be found at the CDC COVID Data Tracker ", 
                                                  a(href = "https://covid.cdc.gov/covid-data-tracker/#datatracker-home", "here",
                                                    .noWS = "outside"), .noWS = c("after-begin", "before-end"), 
                                                  ".", align = "center", style = "color:#d9d9d9"),
